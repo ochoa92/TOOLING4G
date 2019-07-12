@@ -139,7 +139,7 @@ void NewCartImpController::starting(const ros::Time& /*time*/) {
   // ---------------------------------------------------------------------------
   std::string path_gains;
   double k1, k2, k3, k4, k5, k6, k7;
-  path_gains = "/home/helio/catkin_ws/src/franka_ros/franka_spacenav/gains/new_cart_imp_controller_gains";
+  path_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_spacenav/gains/new_cart_imp_controller_gains";
   infile_gains.open(path_gains);
   if(infile_gains.is_open()){
     infile_gains >> k1 >> k2 >> k3 >> k4 >> k5 >> k6 >> k7;

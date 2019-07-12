@@ -148,7 +148,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // Get the controller gains from a file
   // ---------------------------------------------------------------------------
   std::string path_gains;
-  path_gains = "/home/helio/catkin_ws/src/franka_ros/franka_udrilling/controller_gains/compliance_param";
+  path_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/controller_gains/compliance_param";
   file_gains.open(path_gains);
   std::string line;
   getline(file_gains, line);  // first line (ignore)
@@ -207,7 +207,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // Get the proporcional force gains from a file
   // ---------------------------------------------------------------------------
   std::string path_force_gains;
-  path_force_gains = "/home/helio/catkin_ws/src/franka_ros/franka_udrilling/controller_gains/force_param";
+  path_force_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/controller_gains/force_param";
   file_force_gains.open(path_force_gains);
   if(file_force_gains.is_open()){
     file_force_gains >> Kfx >> Kfy >> Kfz;

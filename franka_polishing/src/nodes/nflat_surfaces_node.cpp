@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
   Eigen::MatrixXd orientation;  // matrix to save the robot orientations in Base-frame
   std::ifstream pattern_file;
   std::string pattern_path;
-  pattern_path = "/home/helio/catkin_ws/src/franka_ros/franka_polishing/co_manipulation_data/pattern";
+  pattern_path = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/pattern";
   pattern_file.open(pattern_path);
 
   double time, px, py, pz, qx, qy, qz, qw;
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
   std::string path_plane;
   double x, y, z;
   Eigen::MatrixXd P;
-  path_plane = "/home/helio/catkin_ws/src/franka_ros/franka_polishing/co_manipulation_data/plane_points";
+  path_plane = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/plane_points";
   file_plane.open(path_plane);
   int n_points = 0;
   P.resize(3, n_points + 1);

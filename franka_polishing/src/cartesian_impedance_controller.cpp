@@ -141,7 +141,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // Get the controller gains from a file
   // ---------------------------------------------------------------------------
   std::string path_gains;
-  path_gains = "/home/helio/catkin_ws/src/franka_ros/franka_polishing/controller_gains/compliance_param";
+  path_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/controller_gains/compliance_param";
   file_gains.open(path_gains);
   std::string line;
   getline(file_gains, line);  // first line (ignore)

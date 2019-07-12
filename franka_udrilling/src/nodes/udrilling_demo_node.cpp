@@ -66,7 +66,7 @@ int main(int argc, char **argv){
   // GET THE STATION POINT FROM FILE
   // ---------------------------------------------------------------------------
   std::ifstream station_file;
-  station_file.open("/home/helio/catkin_ws/src/franka_ros/franka_udrilling/co_manipulation_data/station");
+  station_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/station");
 
   double X, Y, Z;
   if(station_file.is_open()){
@@ -92,7 +92,7 @@ int main(int argc, char **argv){
   // GET THE DESIRED ROTATION FROM FILE
   // ---------------------------------------------------------------------------
   std::ifstream orientation_file;
-  orientation_file.open("/home/helio/catkin_ws/src/franka_ros/franka_udrilling/co_manipulation_data/mould_orientation");
+  orientation_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_orientation");
 
   double qx, qy, qz, qw;
   if(orientation_file.is_open()){
@@ -119,7 +119,7 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   Eigen::MatrixXd P;  // matrix to save the mould points
   std::ifstream points_file;
-  points_file.open("/home/helio/catkin_ws/src/franka_ros/franka_udrilling/co_manipulation_data/mould_points");
+  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
 
   double delta_z = 0.002;
   int n_points = 0;

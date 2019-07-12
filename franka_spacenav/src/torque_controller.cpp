@@ -17,19 +17,19 @@ namespace franka_spacenav {
 TorqueController::TorqueController(){
   std::cout << "Open the file to write!" << std::endl;
   std::string path;
-  path = "/home/helio/catkin_ws/src/franka_ros/franka_spacenav/spacenav_data/torque_controller";
+  path = "/home/helio/catkin_ws/src/TOOLING4G/franka_spacenav/spacenav_data/torque_controller";
   file.open(path, std::ofstream::out);
   file << " t p_x p_y p_z Qx Qy Qz Qw Fx Fy Fz\n";
   file << " s m m m Qunit Qunit Qunit Qunit N N N\n";
 
   // points
   std::string path_points;
-  path_points = "/home/helio/catkin_ws/src/franka_ros/franka_spacenav/spacenav_data/points";
+  path_points = "/home/helio/catkin_ws/src/TOOLING4G/franka_spacenav/spacenav_data/points";
   file_points.open(path_points, std::ofstream::out);
 
   // desired orientation
   std::string path_desired_o;
-  path_desired_o = "/home/helio/catkin_ws/src/franka_ros/franka_spacenav/spacenav_data/desired_o";
+  path_desired_o = "/home/helio/catkin_ws/src/TOOLING4G/franka_spacenav/spacenav_data/desired_o";
   file_desired_o.open(path_desired_o, std::ofstream::out);
 
 }

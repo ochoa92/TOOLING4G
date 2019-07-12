@@ -25,7 +25,7 @@ namespace franka_udrilling {
 CoManipulationMode::CoManipulationMode(){
   std::cout << "ROBOT READY TO SAVE DATA!" << std::endl;
   // mould points file opened
-  mould_points_file.open("/home/helio/catkin_ws/src/franka_ros/franka_udrilling/co_manipulation_data/mould_points", std::ofstream::out);
+  mould_points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points", std::ofstream::out);
 }
 
 
@@ -170,7 +170,7 @@ void CoManipulationMode::update(const ros::Time& /*time*/, const ros::Duration& 
         last_time = time_lapse;
         flag_mode = STATION;
         // station file opened
-        station_file.open("/home/helio/catkin_ws/src/franka_ros/franka_udrilling/co_manipulation_data/station", std::ofstream::out);
+        station_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/station", std::ofstream::out);
       }
 
       if(spacenav_button_2 == 1 && time_lapse - last_time > d){
@@ -209,7 +209,7 @@ void CoManipulationMode::update(const ros::Time& /*time*/, const ros::Duration& 
         last_time = time_lapse;
         flag_mode = MOULD_ORIENTATION;
         // mould orientation file opened
-        mould_orientation_file.open("/home/helio/catkin_ws/src/franka_ros/franka_udrilling/co_manipulation_data/mould_orientation", std::ofstream::out);
+        mould_orientation_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_orientation", std::ofstream::out);
       }
 
       if(spacenav_button_2 == 1 && time_lapse - last_time > d){
