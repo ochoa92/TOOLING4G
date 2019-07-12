@@ -1,0 +1,27 @@
+<library path="lib/libfranka_polishing">
+
+  <class name="franka_polishing/CartesianImpedanceController"
+         type="franka_polishing::CartesianImpedanceController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that renders a spring damper system in End-Effector frame. Orientation based on new orientation method.
+    </description>
+  </class>
+
+  <class name="franka_polishing/TrainingMode"
+         type="franka_polishing::TrainingMode"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      Switches to torque controller and allows the user to train the robot.
+    </description>
+  </class>
+
+  <class name="franka_polishing/CoManipulationMode"
+         type="franka_polishing::CoManipulationMode"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      The robot switches to gravity compensation and allows the user to choose N planes and train/teach the robot. 
+    </description>
+  </class>
+
+</library>

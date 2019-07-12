@@ -1,0 +1,11 @@
+<library path="lib/libfranka_simulation">
+
+  <class name="franka_simulation/CartesianImpedanceController"
+         type="franka_simulation::CartesianImpedanceController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that renders a spring damper system in End-Effector frame. Orientation based on new orientation method.
+    </description>
+  </class>
+
+</library>

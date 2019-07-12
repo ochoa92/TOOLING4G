@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<launch>
+
+  <arg name="robot_ip" default="172.16.0.2"/>
+  <arg name="load_polishing_tool" default="true" />
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+  </include>
+
+  <param if="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_polishing_tool.urdf.xacro'" />
+  <param unless="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" />
+
+  <rosparam command="load" file="$(find franka_polishing)/config/franka_polishing_controllers.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="co_manipulation_mode" />
+  <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_polishing)/launch/rviz/co_manipulation_mode.rviz" />
+
+  <!-- spacenav_node launch file -->
+  <include file="$(find spacenav_node)/launch/classic.launch" />
+
+</launch>

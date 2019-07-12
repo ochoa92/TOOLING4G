@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/ochoa/franka_ws/devel/include",
+                "/opt/ros/kinetic/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_control/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_example_controllers/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_gripper/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_hw/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_polishing/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_simulation/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_spacenav/include",
+                "/home/ochoa/franka_ws/src/franka_ros/franka_udrilling/include",
+                "/usr/include"
+            ],
+            "name": "Linux",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

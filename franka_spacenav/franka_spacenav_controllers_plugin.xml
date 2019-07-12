@@ -1,0 +1,27 @@
+<library path="lib/libfranka_spacenav">
+
+  <class name="franka_spacenav/NewCartImpController"
+         type="franka_spacenav::NewCartImpController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that renders a spring damper system in a cartesian space.
+    </description>
+  </class>
+
+  <class name="franka_spacenav/TorqueController"
+         type="franka_spacenav::TorqueController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      Simply switch to torque controller.
+    </description>
+  </class>
+
+  <class name="franka_spacenav/CartesianImpedanceController"
+         type="franka_spacenav::CartesianImpedanceController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller that renders a spring damper system in End-Effector frame. Orientation based on new orientation method.
+    </description>
+  </class>
+
+</library>

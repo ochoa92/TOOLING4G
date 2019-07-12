@@ -1,0 +1,27 @@
+<library path="lib/libfranka_udrilling">
+
+  <class name="franka_udrilling/TrainingMode"
+         type="franka_udrilling::TrainingMode"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      Switches to torque controller and allows the user to train the robot.
+    </description>
+  </class>
+
+  <class name="franka_udrilling/CartesianImpedanceController"
+       type="franka_udrilling::CartesianImpedanceController"
+       base_class_type="controller_interface::ControllerBase">
+  <description>
+    A controller that renders a spring damper system in End-Effector frame. Orientation based on new orientation method.
+  </description>
+</class>
+
+  <class name="franka_udrilling/CoManipulationMode"
+         type="franka_udrilling::CoManipulationMode"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      The robot switches to gravity compensation and allows the user to grabs and manipulates the robot. 
+    </description>
+  </class>
+
+</library>

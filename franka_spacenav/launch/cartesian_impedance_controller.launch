@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="robot_ip" default="172.16.0.2"/>
+  <arg name="load_gripper" default="true" />
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="load_gripper" value="$(arg load_gripper)" />
+  </include>
+
+  <rosparam command="load" file="$(find franka_spacenav)/config/franka_spacenav_controllers.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_impedance_controller"/>
+  <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_spacenav)/launch/rviz/franka_description_with_marker.rviz"/>
+
+  <!--
+  <node name="equilibrium_pose_node" pkg="franka_spacenav" type="interactive_marker.py" required="true" output="screen">
+    <param name="link_name" value="panda_link0" />
+  </node>
+  -->
+
+  <!-- spacenav node launch file -->
+  <include file="$(find spacenav_node)/launch/classic.launch" />
+
+</launch>

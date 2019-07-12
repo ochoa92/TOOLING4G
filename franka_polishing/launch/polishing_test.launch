@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="robot_ip" default="172.16.0.2"/>
+  <arg name="load_polishing_tool" default="true" />
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+  </include>
+
+  <!-- launch robot with polishing tool -->
+  <param if="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_polishing_tool.urdf.xacro'" />
+  <param unless="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" />
+
+  <!-- To see mould in rviz -->
+  <group ns="polishing">
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/moulds/mould.xacro'" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0.56 -0.02 0.041 0 0 0 1 panda_link0 mould 100"/> -->
+    
+  </group>
+
+  <!-- launch rviz -->
+  <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_polishing)/launch/rviz/franka_polishing.rviz"/>
+
+  <!-- spacenav node launch file -->
+  <include file="$(find spacenav_node)/launch/classic.launch" />
+
+  <!-- To run a node -->
+  <!-- <node name="polished_test_node" pkg="franka_polishing" type="polished_test_node" required="true" output="screen" /> -->
+
+</launch>
