@@ -16,6 +16,9 @@ int main(int argc, char** argv) {
 
  
   std::cout << "Ola" << std::endl;
+  std::cout << "Ola" << std::endl;
+
+
 
   // ---------------------------------------------------------------------------
   // MAIN LOOP
