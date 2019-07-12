@@ -14,8 +14,8 @@ int main(int argc, char** argv) {
   franka_polishing::Spacenav panda(nh);
   geometry_msgs::PoseStamped marker_pose;
 
-
-  
+ 
+  std::cout << "Ola" << std::endl;
 
   // ---------------------------------------------------------------------------
   // MAIN LOOP
