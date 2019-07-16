@@ -24,4 +24,4 @@ The franka_udrilling package provides a computed-torque control architecture for
 The franka_spacenav package provides a interface with a SpaceMouse from 3Dconnexion to control the Panda robot.
 
 # Simulation
-The franka_simulation provides a interface with the Gazebo simulator for the Panda robot. 
+The franka_simulation provides a interface for Gazebo simulator. 
