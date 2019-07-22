@@ -200,7 +200,7 @@ int main(int argc, char **argv){
   p_roof.setZero();
   p_goal.setZero();
   p_limit.setZero();
-  double force_limit = 15.0;
+  double force_limit = 12.0;
 
 
   // ---------------------------------------------------------------------------
