@@ -1,7 +1,7 @@
 // =============================================================================
 // Name        : udrilling_06_demo_node.cpp
 // Author      : Hélio Ochoa
-// Description : 0.6 mm
+// Description : 0.6 mm 
 // =============================================================================
 #include <franka_udrilling/spacenav.h>
 #include <tf/transform_broadcaster.h>
@@ -14,11 +14,12 @@
 #define STATIONUP 2
 #define MOVE2POINT 3
 #define POINTDOWN 4
-#define DRILL 5
-#define DRILLUP 6
-#define DRILLDOWN 7
-#define CHANGEPOINT 8
-#define INTERRUPT 9
+#define PREDRILL 5
+#define DRILL 6
+#define DRILLUP 7
+#define DRILLDOWN 8
+#define CHANGEPOINT 9
+#define INTERRUPT 10
 // -----------------------------------------------------------------------------
 
 int main(int argc, char **argv){
@@ -120,7 +121,6 @@ int main(int argc, char **argv){
   std::ifstream points_file;
   points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
 
-  double delta_z = 0.002;
   int n_points = 0;
   P.resize(3, n_points + 1);
   if(points_file.is_open()){
@@ -129,7 +129,7 @@ int main(int argc, char **argv){
       P.conservativeResize(3, n_points + 1);
       P(0, n_points) = X;
       P(1, n_points) = Y;
-      P(2, n_points) = Z - delta_z;
+      P(2, n_points) = Z;
       n_points++;
     }
   }
@@ -190,11 +190,12 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   // DRILLING TRAJECTORY CONDITIONS
   // ---------------------------------------------------------------------------
-  Eigen::Vector3d delta_drill, delta_roof, delta_goal, delta_limit;
+  Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_goal, delta_limit;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
-  delta_goal << 0.0, 0.0, 0.012;
-  delta_limit << 0.0, 0.0, 0.015;
+  delta_predrill << 0.0, 0.0, 0.005;
+  delta_goal << 0.0, 0.0, 0.006;
+  delta_limit << 0.0, 0.0, 0.012;
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
@@ -337,7 +338,30 @@ int main(int argc, char **argv){
       case POINTDOWN:
         // --> POINT DOWN <--
         ti = 0.0;
-        tf = 5.0;
+        tf = 4.0;
+        if( (t >= ti) && (t <= tf) ){
+          position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
+        }
+        else if(t > tf){
+          flag_drilling = PREDRILL;
+          pi << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+          pf << pi + Rd*delta_predrill;
+          t = 0;  // reset time
+        }
+        t = t + delta_t;
+
+        // INTERRUPT
+        if(panda.spacenav_button_2 == 1){
+          flag_drilling = INTERRUPT;
+        }
+
+        break;
+
+      // -----------------------------------------------------------------------
+      case PREDRILL:
+        // --> PRE DRILL <--
+        ti = 0.0;
+        tf = 15.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -346,9 +370,10 @@ int main(int argc, char **argv){
             std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING!" << std::endl;
             flag_print = 3;
           }
-          if(panda.spacenav_button_1 == 1){
+          // if( panda.spacenav_button_1 == 1 ){
+          if( panda.K_F_ext_hat_K[2] > 5.0 ){
             flag_drilling = DRILL;
-            pi << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+            pi << position_d;
             pf << pi + Rd*delta_drill;
             p_roof << pi + Rd*delta_roof;
             p_goal << pi + Rd*delta_goal;
@@ -378,7 +403,7 @@ int main(int argc, char **argv){
         if( result > 0.0 ){
           // --> DRILL <--
           ti = 0.0;
-          tf = 1.5;
+          tf = 0.6;
           if( (t >= ti) && (t <= tf) ){
             position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
           }
@@ -412,7 +437,7 @@ int main(int argc, char **argv){
       case DRILLUP:
         // --> DRILL UP <--
         ti = 0.0;
-        tf = 0.8;
+        tf = 0.5;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -435,14 +460,14 @@ int main(int argc, char **argv){
       case DRILLDOWN:
         // --> DRILL DOWN <--
         ti = 0.0;
-        tf = 0.8;
+        tf = 0.5;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( pi(2) < p_limit(2) || panda.K_F_ext_hat_K[2] > force_limit){
+          if( (pi(2) < p_limit(2)) || (panda.K_F_ext_hat_K[2] > force_limit) ){
             pf << pi;
           }
           else{
