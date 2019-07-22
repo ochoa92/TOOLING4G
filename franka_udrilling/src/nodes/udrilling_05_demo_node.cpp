@@ -193,14 +193,14 @@ int main(int argc, char **argv){
   Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_goal, delta_limit;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
-  delta_predrill << 0.0, 0.0, 0.006;
-  delta_goal << 0.0, 0.0, 0.007;
+  delta_predrill << 0.0, 0.0, 0.005;
+  delta_goal << 0.0, 0.0, 0.006;
   delta_limit << 0.0, 0.0, 0.012;
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
   p_limit.setZero();
-  double force_limit = 10.0;
+  double force_limit = 15.0;
 
 
   // ---------------------------------------------------------------------------
@@ -361,7 +361,7 @@ int main(int argc, char **argv){
       case PREDRILL:
         // --> PRE DRILL <--
         ti = 0.0;
-        tf = 20.0;
+        tf = 15.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -466,7 +466,7 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( pi(2) < p_limit(2) || panda.K_F_ext_hat_K[2] > force_limit){
+          if( (pi(2) < p_limit(2)) || (panda.K_F_ext_hat_K[2] > force_limit) ){
             pf << pi;
           }
           else{
