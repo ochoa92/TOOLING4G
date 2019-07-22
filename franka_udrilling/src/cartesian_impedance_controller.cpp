@@ -420,6 +420,8 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
                 << integral_error[4] << " "
                 << integral_error[5] << "\n";
 
+  // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;           
+
 }
 
 
