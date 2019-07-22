@@ -337,7 +337,7 @@ int main(int argc, char **argv){
       case POINTDOWN:
         // --> POINT DOWN <--
         ti = 0.0;
-        tf = 5.0;
+        tf = 10.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -442,7 +442,7 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( pi(2) < p_limit(2) || panda.K_F_ext_hat_K[2] > force_limit){
+          if( (pi(2) < p_limit(2)) || (panda.K_F_ext_hat_K[2] > force_limit) ){
             pf << pi;
           }
           else{
