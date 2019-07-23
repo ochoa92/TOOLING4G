@@ -194,14 +194,14 @@ int main(int argc, char **argv){
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
   delta_predrill << 0.0, 0.0, 0.005;
-  delta_goal << 0.0, 0.0, 0.008;  // 0.006
-  delta_limit << 0.0, 0.0, 0.015; // 0.012
+  delta_goal << 0.0, 0.0, 0.008;  // 0.006, 0.008
+  delta_limit << 0.0, 0.0, 0.015; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
   p_limit.setZero();
   double max_force_limit = 12.0;
-  double min_force_limit = 0.0;
+  //double min_force_limit = 0.0;
 
 
   // ---------------------------------------------------------------------------
@@ -368,11 +368,10 @@ int main(int argc, char **argv){
         }
         else if(t > tf){
           if(flag_print == 2){
-            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING!" << std::endl;
+            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING OR WAIT UNTIL Fz > 5.0 (N)!" << std::endl;
             flag_print = 3;
           }
-          // if( panda.spacenav_button_1 == 1 ){
-          if( panda.K_F_ext_hat_K[2] > 5.0 ){
+          if( (panda.spacenav_button_1 == 1) || (panda.K_F_ext_hat_K[2] > 4.0) ){
             flag_drilling = DRILL;
             pi << position_d;
             pf << pi + Rd*delta_drill;
@@ -394,14 +393,14 @@ int main(int argc, char **argv){
       // -----------------------------------------------------------------------
       case DRILL:
         if(flag_print == 3){
-          std::cout << CLEANWINDOW << "ROBOT IS DRILLING, IF YOU WOULD LIKE TO STOP PRESS SPACENAV BUTTON <2>..."  << std::endl;
+          std::cout << CLEANWINDOW << "ROBOT IS DRILLING, IF YOU WOULD LIKE TO STOP PRESS SPACENAV BUTTON <2>! | Fz = " << panda.K_F_ext_hat_K[2] << std::endl;
           flag_print = 4;
         }
 
         O_T_EE_i = panda.O_T_EE;
         pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
         result = pose_i(2) - p_goal(2);
-        if( result > 0.0 || (panda.K_F_ext_hat_K[2] > min_force_limit) ){
+        if( result > 0.0 ){
           // --> DRILL <--
           ti = 0.0;
           tf = 0.6;
@@ -468,7 +467,10 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( (pi(2) < p_limit(2)) || (panda.K_F_ext_hat_K[2] > max_force_limit) ){
+          if( (pi(2) < p_limit(2)) ){
+            pf << pi;
+          }
+          else if( (panda.K_F_ext_hat_K[2] > max_force_limit) ){
             pf << pi;
           }
           else{
