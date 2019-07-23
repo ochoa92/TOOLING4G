@@ -194,13 +194,14 @@ int main(int argc, char **argv){
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
   delta_predrill << 0.0, 0.0, 0.005;
-  delta_goal << 0.0, 0.0, 0.006;
-  delta_limit << 0.0, 0.0, 0.012;
+  delta_goal << 0.0, 0.0, 0.008;  // 0.006
+  delta_limit << 0.0, 0.0, 0.015; // 0.012
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
   p_limit.setZero();
-  double force_limit = 12.0;
+  double max_force_limit = 12.0;
+  double min_force_limit = 0.0;
 
 
   // ---------------------------------------------------------------------------
@@ -400,7 +401,7 @@ int main(int argc, char **argv){
         O_T_EE_i = panda.O_T_EE;
         pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
         result = pose_i(2) - p_goal(2);
-        if( result > 0.0 ){
+        if( result > 0.0 || (panda.K_F_ext_hat_K[2] > min_force_limit) ){
           // --> DRILL <--
           ti = 0.0;
           tf = 0.6;
@@ -467,7 +468,7 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( (pi(2) < p_limit(2)) || (panda.K_F_ext_hat_K[2] > force_limit) ){
+          if( (pi(2) < p_limit(2)) || (panda.K_F_ext_hat_K[2] > max_force_limit) ){
             pf << pi;
           }
           else{

@@ -1,20 +1,18 @@
 // =============================================================================
-// Name        : udrilling_test_node.cpp
+// Name        : udrilling_spacenav_node.cpp
 // Author      : Hélio Ochoa
 // Description : Allows user to control the Panda robot pose with space-mouse.
 // =============================================================================
 #include <franka_udrilling/spacenav.h>
 #include <tf/transform_broadcaster.h>
 
-using namespace franka_udrilling;
-
-geometry_msgs::PoseStamped marker_pose;
-
 int main(int argc, char **argv){
 
   ros::init(argc, argv, "udrilling_spacenav_node");
   ros::NodeHandle nh;
   franka_udrilling::Spacenav panda(nh);
+
+  geometry_msgs::PoseStamped marker_pose;
 
   // ---------------------------------------------------------------------------
   // tf broadcaster
