@@ -1,5 +1,5 @@
 // =============================================================================
-// Name        : universal_udrilling_node.cpp
+// Name        : udrilling_test_node.cpp
 // Author      : Hélio Ochoa
 // Description :
 // =============================================================================
@@ -23,7 +23,7 @@ geometry_msgs::PoseStamped marker_pose;
 
 int main(int argc, char **argv){
 
-  ros::init(argc, argv, "universal_udrilling_node");
+  ros::init(argc, argv, "udrilling_test_node");
   ros::NodeHandle nh;
   franka_udrilling::Spacenav panda(nh);
 
