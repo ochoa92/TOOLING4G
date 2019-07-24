@@ -415,7 +415,7 @@ int main(int argc, char **argv){
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
-          delta_up << 0.0, 0.0, 0.1;
+          delta_up << 0.0, 0.0, 0.15;
           pf << pi - Rd*delta_up;
           t = 0;
         }
@@ -461,10 +461,10 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( pi(2) < p_limit(2) ){
+          if( panda.K_F_ext_hat_K[2] > max_force_limit ){
             pf << pi;
           }
-          else if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+          else if( pi(2) < p_limit(2) ){
             pf << pi;
           }
           else{
@@ -541,7 +541,7 @@ int main(int argc, char **argv){
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
-          delta_up << 0.0, 0.0, 0.1;
+          delta_up << 0.0, 0.0, 0.15;
           pf << pi - Rd*delta_up;
           t = 0;
         }
