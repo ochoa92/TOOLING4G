@@ -467,10 +467,10 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( (pi(2) < p_limit(2)) ){
+          if( pi(2) < p_limit(2) ){
             pf << pi;
           }
-          else if( (panda.K_F_ext_hat_K[2] > max_force_limit) ){
+          else if( panda.K_F_ext_hat_K[2] > max_force_limit ){
             pf << pi;
           }
           else{

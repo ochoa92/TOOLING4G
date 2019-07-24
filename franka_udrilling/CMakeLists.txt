@@ -143,7 +143,7 @@ add_executable(pattern_udrilling_node src/nodes/pattern_udrilling_node.cpp)
 add_executable(udrilling_help_node src/nodes/udrilling_help_node.cpp)
 add_executable(udrilling_06_demo_node src/nodes/udrilling_06_demo_node.cpp)
 add_executable(udrilling_05_demo_node src/nodes/udrilling_05_demo_node.cpp)
-add_executable(force_test_node src/nodes/force_test_node.cpp)
+add_executable(universal_udrilling_node src/nodes/universal_udrilling_node.cpp)
 
 
 ## Specify libraries to link a library or executable target against
@@ -154,7 +154,7 @@ target_link_libraries(pattern_udrilling_node ${catkin_LIBRARIES} ${PROJECT_NAME}
 target_link_libraries(udrilling_help_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 target_link_libraries(udrilling_06_demo_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 target_link_libraries(udrilling_05_demo_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
-target_link_libraries(force_test_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+target_link_libraries(universal_udrilling_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 
 
 #############

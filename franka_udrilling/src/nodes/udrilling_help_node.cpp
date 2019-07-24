@@ -57,17 +57,15 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   // DRILLING TRAJECTORY CONDITIONS
   // ---------------------------------------------------------------------------
-  Eigen::Vector3d delta_drill, delta_roof, delta_goal, delta_limit;
-  delta_drill << 0.0, 0.0, 0.002;
-  delta_roof << 0.0, 0.0, 0.002;
-  delta_goal << 0.0, 0.0, 0.012;
+  Eigen::Vector3d delta_drill, delta_roof, delta_limit;
+  delta_drill << 0.0, 0.0, 0.001;
+  delta_roof << 0.0, 0.0, 0.001;
   delta_limit << 0.0, 0.0, 0.015;
-  Eigen::Vector3d p_roof, p_goal, p_limit;
+  Eigen::Vector3d p_roof, p_limit;
   p_roof.setZero();
-  p_goal.setZero();
   p_limit.setZero();
 
-  double max_force_limit = 15.0;
+  double max_force_limit = 12.0;
   double min_force_limit = 0.0;
 
   // ---------------------------------------------------------------------------
@@ -85,7 +83,6 @@ int main(int argc, char **argv){
   int flag_drilling = 0;
   int flag_print = 0;
   int flag_interrupt = 0;
-  double result = 0.0;
 
   ros::Rate loop_rate(1000);
   int count = 0;
@@ -95,7 +92,6 @@ int main(int argc, char **argv){
 
       // -----------------------------------------------------------------------
       case WAIT:
-
         if(flag_print == 0){
           std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING!" << std::endl;
           flag_print = 1;
@@ -105,7 +101,6 @@ int main(int argc, char **argv){
           pi << pose_i[0], pose_i[1], pose_i[2];  // define initial position
           pf << pi + Rd*delta_drill;
           p_roof << pi + Rd*delta_roof;
-          p_goal << pi + Rd*delta_goal;
           p_limit << pi + Rd*delta_limit;
           t = 0;  // reset time
         }
@@ -124,33 +119,19 @@ int main(int argc, char **argv){
           flag_print = 2;
         }
 
-        O_T_EE_i = panda.O_T_EE;
-        pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
-        result = pose_i(2) - p_goal(2);
-        if( result > 0.0 || panda.K_F_ext_hat_K[2] > min_force_limit){
-          // --> DRILL <--
-          ti = 0.0;
-          tf = 1.5;
-          if( (t >= ti) && (t <= tf) ){
-            position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
-          }
-          else if(t > tf){
-            flag_drilling = ROOFUP;
-            pi << position_d;
-            pf << p_roof;
-            t = 0;  // reset time
-          }
-          t = t + delta_t;
+        // --> DRILL <--
+        ti = 0.0;
+        tf = 0.6;
+        if( (t >= ti) && (t <= tf) ){
+          position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
-        else{
-          flag_drilling = MOVEUP;
-          // flag_print = 4;
-          O_T_EE_i = panda.O_T_EE;
-          pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
-          pi << pose_i[0], pose_i[1], pose_i[2];
-          pf << pi - Rd*delta_up;
-          t = 0;
+        else if(t > tf){
+          flag_drilling = ROOFUP;
+          pi << position_d;
+          pf << p_roof;
+          t = 0;  // reset time
         }
+        t = t + delta_t;
 
         // INTERRUPT
         if(panda.spacenav_button_2 == 1){
@@ -164,7 +145,7 @@ int main(int argc, char **argv){
 
         // --> UP <--
         ti = 0.0;
-        tf = 0.8;
+        tf = 0.5;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -188,20 +169,33 @@ int main(int argc, char **argv){
 
         // --> DOWN <--
         ti = 0.0;
-        tf = 0.8;
+        tf = 0.5;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
-          flag_drilling = DRILL;
-          pi << position_d;
-          if( pi(2) < p_limit(2) || panda.K_F_ext_hat_K[2] > max_force_limit ){
-            pf << pi;
+          if( panda.K_F_ext_hat_K[2] > min_force_limit ){
+            flag_drilling = DRILL;
+            pi << position_d;
+            if( pi(2) < p_limit(2) ){
+              pf << pi;
+            }
+            else if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+              pf << pi;
+            }
+            else{
+              pf << pi + Rd*delta_drill;
+            }
+            t = 0;  // reset time
           }
           else{
-            pf << pi + Rd*delta_drill;
-          }
-          t = 0;  // reset time
+            flag_drilling = MOVEUP;
+            O_T_EE_i = panda.O_T_EE;
+            pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
+            pi << pose_i[0], pose_i[1], pose_i[2];
+            pf << pi - Rd*delta_up;
+            t = 0;  // reset time
+          }        
         }
         t = t + delta_t;
 
@@ -215,7 +209,7 @@ int main(int argc, char **argv){
       // -----------------------------------------------------------------------
       case MOVEUP:
         if(flag_print == 2){
-          std::cout << CLEANWINDOW << "THE HOLE IS COMPLETE AND THE ROBOT IS MOVING UP!" << " result(m): " << result << std::endl;
+          std::cout << CLEANWINDOW << "THE HOLE IS COMPLETE AND THE ROBOT IS MOVING UP!| Fz = " << panda.K_F_ext_hat_K[2] << std::endl;
           flag_print = 3;
         }
 
@@ -226,10 +220,8 @@ int main(int argc, char **argv){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
-
           std::cout << CLEANWINDOW << "PROGRAM FINISHED!" << std::endl;
-          break;
-
+          return(0);
         }
         t = t + delta_t;
 
@@ -261,14 +253,6 @@ int main(int argc, char **argv){
         break;
 
     } //////////////////////////////////////////////////////////////////////////
-
-    // //Define Z limit
-    // if(panda.spacenav_motion(2) > 0.0){
-    //   p_limit(2) += limit_z;
-    // }
-    // else if(panda.spacenav_motion(2) < 0.0){
-    //   p_limit(2) -= limit_z;
-    // }
 
     // std::cout << CLEANWINDOW << position_d << std::endl;
     // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
