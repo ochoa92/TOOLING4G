@@ -66,7 +66,7 @@ int main(int argc, char **argv){
   p_limit.setZero();
 
   double max_force_limit = 12.0;
-  double min_force_limit = 0.0;
+  double min_force_limit = -4.0;
 
   // ---------------------------------------------------------------------------
   // TRAJECTORY UP CONDITIONS
