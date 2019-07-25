@@ -190,11 +190,10 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   // DRILLING TRAJECTORY CONDITIONS
   // ---------------------------------------------------------------------------
-  Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_goal, delta_limit;
+  Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_limit;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
   delta_predrill << 0.0, 0.0, 0.005;
-  delta_goal << 0.0, 0.0, 0.008;  // 0.006, 0.008
   delta_limit << 0.0, 0.0, 0.015; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_limit;
   p_roof.setZero();
@@ -461,10 +460,10 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+          if( pi(2) < p_limit(2) ){
             pf << pi;
           }
-          else if( pi(2) < p_limit(2) ){
+          else if( panda.K_F_ext_hat_K[2] > max_force_limit ){
             pf << pi;
           }
           else{

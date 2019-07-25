@@ -7,14 +7,14 @@
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 
-geometry_msgs::PoseStamped marker_pose;
-
 int main(int argc, char** argv) {
 
   ros::init(argc, argv, "capsule_node");
 
   ros::NodeHandle nh;
   franka_spacenav::Spacenav franka(nh);
+
+  geometry_msgs::PoseStamped marker_pose;
 
   // ---------------------------------------------------------------------------
   // GET POINTS FROM A FILE
@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
   }
   else{
     cout << "\nError open the file!" << endl;
+    return(0);
   }
   file_points.close();
   // std::cout << POINTS.transpose() << std::endl;
@@ -102,6 +103,7 @@ int main(int argc, char** argv) {
   }
   else{
     std::cout << "Error open the file!" << std::endl;
+    return(0);
   }
   file_desired_o.close();
   Quaterniond Qd;  // desired Quaternion

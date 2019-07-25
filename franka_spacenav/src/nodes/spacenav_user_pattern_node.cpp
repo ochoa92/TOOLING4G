@@ -15,10 +15,10 @@ int main(int argc, char** argv) {
   MatrixXd pose_d;  // matrix to save the robot poses
   ifstream infile;
   string path;
-  path = "/home/ochoa/kst/franka/torque_controller";
+  path = "/home/helio/kst/franka/torque_controller";
   infile.open(path);
 
-  double time, p_xd, p_yd, p_zd, Q_xd, Q_yd, Q_zd, Q_wd;
+  double time, p_xd, p_yd, p_zd, Q_xd, Q_yd, Q_zd, Q_wd, Fx, Fy, Fz;
   string line;
   getline(infile, line);  // first line
   getline(infile, line);  // second line
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
   if(infile.is_open()){
     while(!infile.eof()){
       getline(infile, line);
-      infile >> time >> p_xd >> p_yd >> p_zd >> Q_xd >> Q_yd >> Q_zd >> Q_wd;
+      infile >> time >> p_xd >> p_yd >> p_zd >> Q_xd >> Q_yd >> Q_zd >> Q_wd >> Fx >> Fy >> Fz;
       //cout << p_xd << " " << p_yd << " " << p_zd << endl;
 
       // save the values in the matrix
@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
   }
   else{
     cout << "Error open the file!" << endl;
+    return(0);
   }
   infile.close();
 

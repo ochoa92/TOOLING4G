@@ -421,7 +421,7 @@ int main(int argc, char **argv){
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
-          delta_up << 0.0, 0.0, 0.1;
+          delta_up << 0.0, 0.0, 0.15;
           pf << pi - Rd*delta_up;
           t = 0;
         }
