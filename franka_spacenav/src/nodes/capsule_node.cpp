@@ -209,7 +209,7 @@ int main(int argc, char** argv) {
       }
 
       ti = 0.0;
-      tf = 20.0;
+      tf = 10.0;
       if( (t >= ti) && (t <= tf) ){
         position_d = franka.polynomial3_traj3D(pi, pf, ti, tf, t);
       }
@@ -270,7 +270,7 @@ int main(int argc, char** argv) {
       }
 
       ti = 0.0;
-      tf = 20.0;
+      tf = 10.0;
       if( (t >= ti) && (t <= tf) ){
         position_d = franka.polynomial3_traj3D(pi, pf, ti, tf, t);
       }
