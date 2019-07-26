@@ -194,8 +194,8 @@ int main(int argc, char **argv){
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
   delta_predrill << 0.0, 0.0, 0.005;
-  delta_goal << 0.0, 0.0, 0.006;
-  delta_limit << 0.0, 0.0, 0.012;
+  delta_goal << 0.0, 0.0, 0.006;  // 0.006, 0.008
+  delta_limit << 0.0, 0.0, 0.012; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
@@ -420,7 +420,7 @@ int main(int argc, char **argv){
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
-          delta_up << 0.0, 0.0, 0.1;
+          delta_up << 0.0, 0.0, 0.15;
           pf << pi - Rd*delta_up;
           t = 0;
         }
@@ -543,7 +543,7 @@ int main(int argc, char **argv){
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
-          delta_up << 0.0, 0.0, 0.1;
+          delta_up << 0.0, 0.0, 0.15;
           pf << pi - Rd*delta_up;
           t = 0;
         }
