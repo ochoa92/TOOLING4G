@@ -347,6 +347,9 @@ int main(int argc, char **argv){
           pi << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
           pf << pi + Rd*delta_predrill;
           t = 0;  // reset time
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
         }
         t = t + delta_t;
 
@@ -508,7 +511,6 @@ int main(int argc, char **argv){
             }
             return 0;
           }
-
           flag_drilling = MOVE2STATION;
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
@@ -518,6 +520,9 @@ int main(int argc, char **argv){
           ti = 0.0;
           tf = 4.0;
           t = 0;  // reset time
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.1");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.1");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.1");
         }
         t = t + delta_t;
 
