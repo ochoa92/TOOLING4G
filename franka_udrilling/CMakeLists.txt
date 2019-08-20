@@ -59,16 +59,16 @@ find_package(Franka 0.5.0 REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-#generate_messages()
+# generate_messages()
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/compliance_param.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -107,6 +107,7 @@ add_library(${PROJECT_NAME}
   src/cartesian_impedance_controller.cpp
   src/spacenav.cpp
   src/co_manipulation_mode.cpp
+  src/udrilling_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -115,7 +116,7 @@ add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
   ${PROJECT_NAME}_generate_messages_cpp
   ${PROJECT_NAME}_gencpp
-#  ${PROJECT_NAME}_gencfg
+  ${PROJECT_NAME}_gencfg
 )
 
 ## Specify libraries to link a library or executable target against

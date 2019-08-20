@@ -24,4 +24,12 @@
     </description>
   </class>
 
+  <class name="franka_udrilling/uDrillingController"
+         type="franka_udrilling::uDrillingController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      A controller for micro-drilling tasks based on a cartesian impedance controller with posture optimization. Compliance parameters and the equilibrium pose can be modified online.
+    </description>
+  </class>
+
 </library>
