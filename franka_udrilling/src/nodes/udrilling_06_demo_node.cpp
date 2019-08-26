@@ -119,8 +119,8 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   Eigen::MatrixXd P;  // matrix to save the mould points
   std::ifstream points_file;
-  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
-
+  // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
+  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
   int n_points = 0;
   P.resize(3, n_points + 1);
   if(points_file.is_open()){
@@ -194,8 +194,8 @@ int main(int argc, char **argv){
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
   delta_predrill << 0.0, 0.0, 0.005;
-  delta_goal << 0.0, 0.0, 0.008;  // 0.006, 0.008
-  delta_limit << 0.0, 0.0, 0.015; // 0.012, 0.015
+  delta_goal << 0.0, 0.0, 0.005;  // 0.006, 0.008
+  delta_limit << 0.0, 0.0, 0.012; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
@@ -348,6 +348,9 @@ int main(int argc, char **argv){
           pi << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
           pf << pi + Rd*delta_predrill;
           t = 0;  // reset time
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
         }
         t = t + delta_t;
 
@@ -522,6 +525,9 @@ int main(int argc, char **argv){
           ti = 0.0;
           tf = 4.0;
           t = 0;  // reset time
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.1");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.1");
+          system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.1");
         }
         t = t + delta_t;
 
