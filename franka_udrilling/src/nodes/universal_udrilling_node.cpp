@@ -119,8 +119,8 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   Eigen::MatrixXd P;  // matrix to save the mould points
   std::ifstream points_file;
-  // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
-  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
+  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
+  // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
   int n_points = 0;
   P.resize(3, n_points + 1);
   if(points_file.is_open()){
@@ -190,15 +190,13 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   // DRILLING TRAJECTORY CONDITIONS
   // ---------------------------------------------------------------------------
-  Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_limit;
+  Eigen::Vector3d delta_drill, delta_roof, delta_predrill;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
-  delta_predrill << 0.0, 0.0, 0.005;
-  delta_limit << 0.0, 0.0, 0.015; // 0.012, 0.015
-  Eigen::Vector3d p_roof, p_limit;
+  delta_predrill << 0.0, 0.0, 0.006;
+  Eigen::Vector3d p_roof;
   p_roof.setZero();
-  p_limit.setZero();
-  double max_force_limit = 12.0;
+  double max_force_limit = 10.0;
   double min_force_limit = 4.0;
 
 
@@ -212,6 +210,7 @@ int main(int argc, char **argv){
   int flag_print = 0;
   int flag_interrupt = 0;
   int n_points_done = 0;
+  int systemRet = 0;
 
   ros::Rate loop_rate(1000);
   int count = 0;
@@ -345,6 +344,12 @@ int main(int argc, char **argv){
           pi << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
           pf << pi + Rd*delta_predrill;
           t = 0;  // reset time
+          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
+          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
+          if(systemRet == -1){
+            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+          }
         }
         t = t + delta_t;
 
@@ -373,7 +378,6 @@ int main(int argc, char **argv){
             pi << position_d;
             pf << pi + Rd*delta_drill;
             p_roof << pi + Rd*delta_roof;
-            p_limit << pi + Rd*delta_limit;
             t = 0;  // reset time
           }
         }
@@ -453,17 +457,14 @@ int main(int argc, char **argv){
       case DRILLDOWN:
         // --> DRILL DOWN <--
         ti = 0.0;
-        tf = 0.5;
+        tf = 0.7;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( pi(2) < p_limit(2) ){
-            pf << pi;
-          }
-          else if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+          if( panda.K_F_ext_hat_K[2] > max_force_limit ){
             pf << pi;
           }
           else{
@@ -515,6 +516,12 @@ int main(int argc, char **argv){
           ti = 0.0;
           tf = 4.0;
           t = 0;  // reset time
+          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.2");
+          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.2");
+          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.2");
+          if(systemRet == -1){
+            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+          }
         }
         t = t + delta_t;
 
