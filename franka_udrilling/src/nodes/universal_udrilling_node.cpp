@@ -1,7 +1,8 @@
 // =============================================================================
 // Name        : universal_udrilling_node.cpp
 // Author      : Hélio Ochoa
-// Description : 0.6 mm 
+// Description : For all kind of drills (0.6, 0.5, 0.4 mm) and robot performs 
+//               the drilling in any end-effector direction or orientation...             
 // =============================================================================
 #include <franka_udrilling/spacenav.h>
 #include <tf/transform_broadcaster.h>
@@ -87,6 +88,16 @@ int main(int argc, char **argv){
   p_station.z = S(2);
   points.points.push_back(p_station);
 
+  Eigen::Quaterniond Qd_station;  // station desired Quaternion
+  Qd_station.vec()[0] = -0.69101;
+  Qd_station.vec()[1] = 0.722788;
+  Qd_station.vec()[2] = 0.0059565;
+  Qd_station.w() = -0.00688607;
+  // std::cout << Qd.coeffs() << std::endl;
+
+  Eigen::Matrix3d Rd_station(Qd_station); // station desired Rotation
+  // std::cout << Rd_station << std::endl;
+
 
   // ---------------------------------------------------------------------------
   // GET THE DESIRED ROTATION FROM FILE
@@ -119,8 +130,8 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   Eigen::MatrixXd P;  // matrix to save the mould points
   std::ifstream points_file;
-  // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
-  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
+  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
+  // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
   int n_points = 0;
   P.resize(3, n_points + 1);
   if(points_file.is_open()){
@@ -175,7 +186,7 @@ int main(int argc, char **argv){
   // orientation
   Eigen::Quaterniond oi, of;
   oi.coeffs() << pose_i[3], pose_i[4], pose_i[5], pose_i[6];
-  of.coeffs() << Qd.vec()[0], Qd.vec()[1], Qd.vec()[2], Qd.w();
+  of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
   double t1 = 0.0;
   double delta_t1 = delta_t/(tf-ti);
 
@@ -190,10 +201,11 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   // DRILLING TRAJECTORY CONDITIONS
   // ---------------------------------------------------------------------------
-  Eigen::Vector3d delta_drill, delta_roof, delta_predrill;
+  Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
-  delta_predrill << 0.0, 0.0, 0.006;
+  delta_predrill << 0.0, 0.0, 0.01;
+  delta_point << 0.0, 0.0, 0.005;
   Eigen::Vector3d p_roof;
   p_roof.setZero();
   double max_force_limit = 12.0;
@@ -210,7 +222,15 @@ int main(int argc, char **argv){
   int flag_print = 0;
   int flag_interrupt = 0;
   int n_points_done = 0;
+  
+  // change compliance parameters
   int systemRet = 0;
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
+  if(systemRet == -1){
+    std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+  }
 
   ros::Rate loop_rate(1000);
   int count = 0;
@@ -264,7 +284,7 @@ int main(int argc, char **argv){
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
-          pf << pi - Rd*delta_up;
+          pf << pi - Rd_station*delta_up;
           t = 0;  // reset time
         }
         t = t + delta_t;
@@ -320,7 +340,11 @@ int main(int argc, char **argv){
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
           pf << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+          pf << pf - Rd*delta_point;
           t = 0;  // reset time
+          oi.coeffs() << pose_i[3], pose_i[4], pose_i[5], pose_i[6];
+          of.coeffs() << Qd.vec()[0], Qd.vec()[1], Qd.vec()[2], Qd.w();
+          t1 = 0.0; // reset orientation time
         }
         t = t + delta_t;
 
@@ -336,23 +360,20 @@ int main(int argc, char **argv){
         // --> POINT DOWN <--
         ti = 0.0;
         tf = 4.0;
+        delta_t1 = delta_t/(tf-ti);
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
+          if ( t1 <= 1.0 ){
+            orientation_d = oi.slerp(t1, of);
+            orientation_d.normalize();
+          }
+          t1 = t1 + delta_t1;
         }
         else if(t > tf){
           flag_drilling = PREDRILL;
-          pi << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+          pi << position_d;
           pf << pi + Rd*delta_predrill;
           t = 0;  // reset time
-
-          // change compliance parameters
-          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
-          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
-          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
-          if(systemRet == -1){
-            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-          }
-
         }
         t = t + delta_t;
 
@@ -518,16 +539,11 @@ int main(int argc, char **argv){
           delta_up << 0.0, 0.0, 0.3;
           ti = 0.0;
           tf = 4.0;
+          delta_t1 = delta_t/(tf-ti);
           t = 0;  // reset time
-
-          // change compliance parameters
-          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.2");
-          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.2");
-          systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.2");
-          if(systemRet == -1){
-            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-          }
-
+          oi.coeffs() << pose_i[3], pose_i[4], pose_i[5], pose_i[6];
+          of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
+          t1 = 0.0; // reset orientation time
         }
         t = t + delta_t;
 
@@ -571,7 +587,7 @@ int main(int argc, char **argv){
     // -------------------------------------------------------------------------
     // Draw the station tf
     station_tf.setOrigin( tf::Vector3(S(0), S(1), S(2)) );
-    station_tf.setRotation( tf::Quaternion(Qd.vec()[0], Qd.vec()[1], Qd.vec()[2], Qd.w()) );
+    station_tf.setRotation( tf::Quaternion(Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w()) );
     station_br.sendTransform(tf::StampedTransform(station_tf, ros::Time::now(), "/panda_link0", "/station"));
 
     // Draw the panda EE desired transform
