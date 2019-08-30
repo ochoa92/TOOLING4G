@@ -130,8 +130,8 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   Eigen::MatrixXd P;  // matrix to save the mould points
   std::ifstream points_file;
-  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
-  // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
+  // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
+  points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
   int n_points = 0;
   P.resize(3, n_points + 1);
   if(points_file.is_open()){
@@ -388,7 +388,7 @@ int main(int argc, char **argv){
       case PREDRILL:
         // --> PRE DRILL <--
         ti = 0.0;
-        tf = 15.0;
+        tf = 18.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
