@@ -209,7 +209,7 @@ int main(int argc, char **argv){
   Eigen::Vector3d p_roof;
   p_roof.setZero();
   double max_force_limit = 12.0;
-  double min_force_limit = 4.0;
+  double min_force_limit = 3.0;
 
 
   // ---------------------------------------------------------------------------
@@ -388,13 +388,13 @@ int main(int argc, char **argv){
       case PREDRILL:
         // --> PRE DRILL <--
         ti = 0.0;
-        tf = 18.0;
+        tf = 15.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
           if(flag_print == 2){
-            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING OR WAIT UNTIL Fz > 5.0 (N)!" << std::endl;
+            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING OR WAIT UNTIL Fz > " << min_force_limit << " (N)!" << std::endl;
             flag_print = 3;
           }
           if( (panda.spacenav_button_1 == 1) || (panda.K_F_ext_hat_K[2] > min_force_limit) ){
@@ -417,7 +417,7 @@ int main(int argc, char **argv){
       // -----------------------------------------------------------------------
       case DRILL:
         if(flag_print == 3){
-          std::cout << CLEANWINDOW << "ROBOT IS DRILLING, IF YOU WOULD LIKE TO STOP PRESS SPACENAV BUTTON <2>! | Fz = " << panda.K_F_ext_hat_K[2] << std::endl;
+          std::cout << CLEANWINDOW << "HOLE Nº" << n_points_done << " | ROBOT IS DRILLING, IF YOU WOULD LIKE TO STOP PRESS SPACENAV BUTTON <2>! | Fz = " << panda.K_F_ext_hat_K[2] << std::endl;
           flag_print = 4;
         }
 

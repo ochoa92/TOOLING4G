@@ -87,6 +87,15 @@ int main(int argc, char **argv){
   p_station.z = S(2);
   points.points.push_back(p_station);
 
+  Eigen::Quaterniond Qd_station;  // station desired Quaternion
+  Qd_station.vec()[0] = -0.69101;
+  Qd_station.vec()[1] = 0.722788;
+  Qd_station.vec()[2] = 0.0059565;
+  Qd_station.w() = -0.00688607;
+  // std::cout << Qd.coeffs() << std::endl;
+
+  Eigen::Matrix3d Rd_station(Qd_station); // station desired Rotation
+  // std::cout << Rd_station << std::endl;
 
   // ---------------------------------------------------------------------------
   // GET THE DESIRED ROTATION FROM FILE
@@ -175,7 +184,7 @@ int main(int argc, char **argv){
   // orientation
   Eigen::Quaterniond oi, of;
   oi.coeffs() << pose_i[3], pose_i[4], pose_i[5], pose_i[6];
-  of.coeffs() << Qd.vec()[0], Qd.vec()[1], Qd.vec()[2], Qd.w();
+  of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
   double t1 = 0.0;
   double delta_t1 = delta_t/(tf-ti);
 
@@ -190,17 +199,19 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   // DRILLING TRAJECTORY CONDITIONS
   // ---------------------------------------------------------------------------
-  Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_goal, delta_limit;
+  Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_goal, delta_limit, delta_point;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
-  delta_predrill << 0.0, 0.0, 0.006;
-  delta_goal << 0.0, 0.0, 0.008;  // 0.006, 0.008
+  delta_predrill << 0.0, 0.0, 0.01;
+  delta_point << 0.0, 0.0, 0.005;
+  delta_goal << 0.0, 0.0, 0.01;  // 0.008, 0.01
   delta_limit << 0.0, 0.0, 0.015; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
   p_limit.setZero();
-  double force_limit = 12.0;
+  double max_force_limit = 12.0;
+  double min_force_limit = 3.0;
 
 
   // ---------------------------------------------------------------------------
@@ -214,11 +225,11 @@ int main(int argc, char **argv){
   int flag_interrupt = 0;
   int n_points_done = 0;
   double result = 0.0;
-
+  
   // change compliance parameters
   int systemRet = 0;
-  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1600.0");
-  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 75.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1500.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
   if(systemRet == -1){
     std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
   }
@@ -275,7 +286,7 @@ int main(int argc, char **argv){
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
-          pf << pi - Rd*delta_up;
+          pf << pi - Rd_station*delta_up;
           t = 0;  // reset time
         }
         t = t + delta_t;
@@ -331,7 +342,11 @@ int main(int argc, char **argv){
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
           pi << pose_i[0], pose_i[1], pose_i[2];
           pf << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+          pf << pf - Rd*delta_point;
           t = 0;  // reset time
+          oi.coeffs() << pose_i[3], pose_i[4], pose_i[5], pose_i[6];
+          of.coeffs() << Qd.vec()[0], Qd.vec()[1], Qd.vec()[2], Qd.w();
+          t1 = 0.0; // reset orientation time
         }
         t = t + delta_t;
 
@@ -349,13 +364,18 @@ int main(int argc, char **argv){
         tf = 4.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
+          if ( t1 <= 1.0 ){
+            orientation_d = oi.slerp(t1, of);
+            orientation_d.normalize();
+          }
+          t1 = t1 + delta_t1;
         }
         else if(t > tf){
           flag_drilling = PREDRILL;
-          pi << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+          pi << position_d;
           pf << pi + Rd*delta_predrill;
           t = 0;  // reset time
-
+          
           // change compliance parameters
           systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
           systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
@@ -378,16 +398,16 @@ int main(int argc, char **argv){
       case PREDRILL:
         // --> PRE DRILL <--
         ti = 0.0;
-        tf = 15.0;
+        tf = 17.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
           if(flag_print == 2){
-            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING OR WAIT UNTIL Fz > 5.0 (N)!" << std::endl;
+            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING OR WAIT UNTIL Fz > " << min_force_limit << " (N)!" << std::endl;
             flag_print = 3;
           }
-          if( (panda.spacenav_button_1 == 1) || (panda.K_F_ext_hat_K[2] > 4.0) ){
+          if( (panda.spacenav_button_1 == 1) || (panda.K_F_ext_hat_K[2] > min_force_limit) ){
             flag_drilling = DRILL;
             pi << position_d;
             pf << pi + Rd*delta_drill;
@@ -409,7 +429,7 @@ int main(int argc, char **argv){
       // -----------------------------------------------------------------------
       case DRILL:
         if(flag_print == 3){
-          std::cout << CLEANWINDOW << "ROBOT IS DRILLING, IF YOU WOULD LIKE TO STOP PRESS SPACENAV BUTTON <2>! | Fz = " << panda.K_F_ext_hat_K[2] << std::endl;
+          std::cout << CLEANWINDOW << "HOLE Nº: " << n_points_done << " | ROBOT IS DRILLING, IF YOU WOULD LIKE TO STOP PRESS SPACENAV BUTTON <2>! | Fz = " << panda.K_F_ext_hat_K[2] << std::endl;
           flag_print = 4;
         }
 
@@ -419,7 +439,7 @@ int main(int argc, char **argv){
         if( result > 0.0 ){
           // --> DRILL <--
           ti = 0.0;
-          tf = 0.6; 
+          tf = 0.6;
           if( (t >= ti) && (t <= tf) ){
             position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
           }
@@ -476,14 +496,17 @@ int main(int argc, char **argv){
       case DRILLDOWN:
         // --> DRILL DOWN <--
         ti = 0.0;
-        tf = 0.8;
+        tf = 0.7;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( (pi(2) < p_limit(2)) || (panda.K_F_ext_hat_K[2] > force_limit) ){
+          if( pi(2) < p_limit(2) ){
+            pf << pi;
+          }
+          else if( panda.K_F_ext_hat_K[2] > max_force_limit ){
             pf << pi;
           }
           else{
@@ -525,6 +548,7 @@ int main(int argc, char **argv){
             }
             return 0;
           }
+
           flag_drilling = MOVE2STATION;
           O_T_EE_i = panda.O_T_EE;
           pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
@@ -533,7 +557,11 @@ int main(int argc, char **argv){
           delta_up << 0.0, 0.0, 0.3;
           ti = 0.0;
           tf = 4.0;
+          delta_t1 = delta_t/(tf-ti);
           t = 0;  // reset time
+          oi.coeffs() << pose_i[3], pose_i[4], pose_i[5], pose_i[6];
+          of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
+          t1 = 0.0; // reset orientation time
 
           // change compliance parameters
           systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.2");
@@ -586,7 +614,7 @@ int main(int argc, char **argv){
     // -------------------------------------------------------------------------
     // Draw the station tf
     station_tf.setOrigin( tf::Vector3(S(0), S(1), S(2)) );
-    station_tf.setRotation( tf::Quaternion(Qd.vec()[0], Qd.vec()[1], Qd.vec()[2], Qd.w()) );
+    station_tf.setRotation( tf::Quaternion(Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w()) );
     station_br.sendTransform(tf::StampedTransform(station_tf, ros::Time::now(), "/panda_link0", "/station"));
 
     // Draw the panda EE desired transform
@@ -598,6 +626,7 @@ int main(int argc, char **argv){
     mould_tf.setOrigin( tf::Vector3(P(0, n_points_done), P(1, n_points_done), P(2, n_points_done)) );
     mould_tf.setRotation( tf::Quaternion(Qd.vec()[0], Qd.vec()[1], Qd.vec()[2], Qd.w()) );
     mould_br.sendTransform(tf::StampedTransform(mould_tf, ros::Time::now(), "/panda_link0", "/mould"));
+
 
     // Draw the points
     marker_pub.publish(points);
