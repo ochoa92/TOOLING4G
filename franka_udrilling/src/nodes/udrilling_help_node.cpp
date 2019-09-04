@@ -106,7 +106,7 @@ int main(int argc, char **argv){
   p_goal.setZero();
   p_limit.setZero();
 
-  double max_force_limit = 10.0;
+  double max_force_limit = 6.0;
 
   // ---------------------------------------------------------------------------
   // TRAJECTORY UP CONDITIONS
@@ -127,8 +127,8 @@ int main(int argc, char **argv){
 
   // change compliance parameters
   int systemRet = 0;
-  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1500.0");
-  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 800.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");

@@ -202,7 +202,7 @@ int main(int argc, char **argv){
   Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_goal, delta_limit, delta_point;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
-  delta_predrill << 0.0, 0.0, 0.01;
+  delta_predrill << 0.0, 0.0, 0.01; 
   delta_point << 0.0, 0.0, 0.005; 
   delta_goal << 0.0, 0.0, 0.008;  // 0.008, 0.01
   delta_limit << 0.0, 0.0, 0.012; // 0.012, 0.015
@@ -210,7 +210,7 @@ int main(int argc, char **argv){
   p_roof.setZero();
   p_goal.setZero();
   p_limit.setZero();
-  double max_force_limit = 12.0;
+  double max_force_limit = 10.0;
   double min_force_limit = 4.0;
 
 
