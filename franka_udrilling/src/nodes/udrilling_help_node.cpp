@@ -100,11 +100,13 @@ int main(int argc, char **argv){
   delta_roof << 0.0, 0.0, 0.001;
   delta_predrill << 0.0, 0.0, 0.003;
   delta_goal << 0.0, 0.0, 0.009;  
-  delta_limit << 0.0, 0.0, 0.015;
+  delta_limit << 0.0, 0.0, 0.012; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
   p_goal.setZero();
   p_limit.setZero();
+
+  double max_force_limit = 10.0;
 
   // ---------------------------------------------------------------------------
   // TRAJECTORY UP CONDITIONS
@@ -125,6 +127,8 @@ int main(int argc, char **argv){
 
   // change compliance parameters
   int systemRet = 0;
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1500.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
@@ -196,6 +200,15 @@ int main(int argc, char **argv){
           flag_print = 3;
         }
 
+        // Force Limit -------------------------------------
+        if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+          flag_drilling = ROOFUP;
+          pi << position_d;
+          pf << p_roof;
+          t = 0;  // reset time
+        }
+        // -------------------------------------------------
+        
         O_T_EE_i = panda.O_T_EE;
         pose_i = panda.robot_pose(O_T_EE_i);  // get current pose
         result = pose_i(2) - p_goal(2);

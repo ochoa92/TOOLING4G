@@ -299,7 +299,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Vector3d position_EE(R*position); // current position in EE frame
     Eigen::Vector3d position_EE_d_(R_d_*position_d_); // current position in EE frame
 
-    count++;
+    // count++;
     // double TIME = count/1000.0;
     // tracking_file << TIME << " "
     //               << position[0] << " " << position_d_[0] << " "

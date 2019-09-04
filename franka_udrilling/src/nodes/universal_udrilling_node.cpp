@@ -209,7 +209,7 @@ int main(int argc, char **argv){
   Eigen::Vector3d p_roof;
   p_roof.setZero();
   double max_force_limit = 12.0;
-  double min_force_limit = 3.0;
+  double min_force_limit = 4.0;
 
 
   // ---------------------------------------------------------------------------
