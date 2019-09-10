@@ -183,7 +183,8 @@ install(FILES franka_udrilling_controllers_plugin.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 catkin_install_python(
-  PROGRAMS scripts/udrilling_data.py
+  PROGRAMS scripts/udrilling_operator_data.py
+           scripts/udrilling_controller_data.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

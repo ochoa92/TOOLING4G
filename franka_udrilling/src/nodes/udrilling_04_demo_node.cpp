@@ -204,7 +204,7 @@ int main(int argc, char **argv){
   delta_roof << 0.0, 0.0, 0.001;
   delta_predrill << 0.0, 0.0, 0.008; //0.01
   delta_point << 0.0, 0.0, 0.003; // 0.005
-  delta_goal << 0.0, 0.0, 0.008;  // 0.008, 0.01
+  delta_goal << 0.0, 0.0, 0.007;  // 0.008, 0.01
   delta_limit << 0.0, 0.0, 0.012; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_goal, p_limit;
   p_roof.setZero();
@@ -229,8 +229,8 @@ int main(int argc, char **argv){
   
   // change compliance parameters
   int systemRet = 0;
-  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
-  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1400.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
@@ -508,7 +508,7 @@ int main(int argc, char **argv){
       case DRILLDOWN:
         // --> DRILL DOWN <--
         ti = 0.0;
-        tf = 0.7;
+        tf = 0.6;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }

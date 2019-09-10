@@ -162,6 +162,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
     Eigen::Vector3d position(transform.translation());
     Eigen::Matrix3d R(transform.rotation());
+    
 
     // ---------------------------------------------------------------------------
     // Set the impedance controller gains
