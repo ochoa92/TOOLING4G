@@ -115,20 +115,37 @@ void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
   else if (flag_motion){
     flag_motion = false;
 
+    // Default configuration
+    // Tx << 1,                       0,                        0, spacenav_motion(0),
+    //       0, cos(spacenav_motion(3)), -sin(spacenav_motion(3)),                  0,
+    //       0, sin(spacenav_motion(3)),  cos(spacenav_motion(3)),                  0,
+    //       0,                       0,                        0,                  1;
+
+    // Ty <<  cos(spacenav_motion(4)), 0, sin(spacenav_motion(4)),                  0,
+    //                              0, 1,                       0, spacenav_motion(1),
+    //       -sin(spacenav_motion(4)), 0, cos(spacenav_motion(4)),                  0,
+    //                              0, 0,                       0,                  1;
+
+    // Tz << cos(spacenav_motion(5)), -sin(spacenav_motion(5)), 0,                  0,
+    //       sin(spacenav_motion(5)),  cos(spacenav_motion(5)), 0,                  0,
+    //                             0,                        0, 1, spacenav_motion(2),
+    //                             0,                        0, 0,                  1;
+
+    // Configuration for udrilling tool
     Tx << 1,                       0,                        0, -spacenav_motion(0),
-          0, cos(spacenav_motion(3)), -sin(spacenav_motion(3)),                  0,
-          0, sin(spacenav_motion(3)),  cos(spacenav_motion(3)),                  0,
-          0,                       0,                        0,                  1;
+          0, cos(spacenav_motion(4)), -sin(spacenav_motion(4)),                   0,
+          0, sin(spacenav_motion(4)),  cos(spacenav_motion(4)),                   0,
+          0,                       0,                        0,                   1;
 
-    Ty <<  cos(spacenav_motion(4)), 0, sin(spacenav_motion(4)),                  0,
+    Ty <<  cos(spacenav_motion(3)), 0, sin(spacenav_motion(3)),                   0,
                                  0, 1,                       0, -spacenav_motion(1),
-          -sin(spacenav_motion(4)), 0, cos(spacenav_motion(4)),                  0,
-                                 0, 0,                       0,                  1;
+          -sin(spacenav_motion(3)), 0, cos(spacenav_motion(3)),                   0,
+                                 0, 0,                       0,                   1;
 
-    Tz << cos(spacenav_motion(5)), -sin(spacenav_motion(5)), 0,                  0,
-          sin(spacenav_motion(5)),  cos(spacenav_motion(5)), 0,                  0,
-                                0,                        0, 1, spacenav_motion(2),
-                                0,                        0, 0,                  1;
+    Tz << cos(-spacenav_motion(5)), -sin(-spacenav_motion(5)), 0,                  0,
+          sin(-spacenav_motion(5)),  cos(-spacenav_motion(5)), 0,                  0,
+                                 0,                         0, 1, spacenav_motion(2),
+                                 0,                         0, 0,                  1;
 
     T_spacenav = Tx * Ty * Tz;
     //T_spacenav = Tz * Ty * Tx;

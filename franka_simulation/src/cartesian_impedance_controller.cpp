@@ -6,7 +6,7 @@ namespace franka_simulation {
 CartesianImpedanceController::CartesianImpedanceController(){
   std::cout << "Open the file to write!" << std::endl;
   std::string tracking_path;
-  tracking_path = "/home/ochoa/kst/simulation/cartesian_impedance_controller";
+  tracking_path = "/home/helio/kst/simulation/cartesian_impedance_controller";
   file_tracking.open(tracking_path, std::ofstream::out);
   file_tracking << " t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz\n";
   file_tracking << " s m m m m m m rad rad rad rad rad rad m m m rad rad rad\n";
@@ -113,7 +113,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // Get the controller gains from a file
   // ---------------------------------------------------------------------------
   std::string path_gains;
-  path_gains = "/home/ochoa/franka_ws/src/franka_ros/franka_simulation/controller_gains/compliance_param";
+  path_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_simulation/controller_gains/compliance_param";
   file_gains.open(path_gains);
   if(file_gains.is_open()){
     file_gains >> Kpx >> Kpy >> Kpz >> Kox >> Koy >> Koz >> Kp_nullspace;
@@ -124,12 +124,20 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   file_gains.close();
 
   // Damping ratio = 1
-  Dpx = 2.0 * sqrt(Kpx);
-  Dpy = 2.0 * sqrt(Kpy);
-  Dpz = 2.0 * sqrt(Kpz);
-  Dox = 2.0 * sqrt(Kox);
-  Doy = 2.0 * sqrt(Koy);
-  Doz = 2.0 * sqrt(Koz);
+  // Dpx = 2.0 * sqrt(Kpx);
+  // Dpy = 2.0 * sqrt(Kpy);
+  // Dpz = 2.0 * sqrt(Kpz);
+  // Dox = 2.0 * sqrt(Kox);
+  // Doy = 2.0 * sqrt(Koy);
+  // Doz = 2.0 * sqrt(Koz);
+
+  // For a non-linear system
+  Dpx = 100.0;
+  Dpy = 100.0;
+  Dpz = 100.0;
+  Dox = 10.0;
+  Doy = 10.0;
+  Doz = 10.0;
 
   // position stiffness in desired frame
   Kp_d_ << Kpx,   0,   0,
@@ -255,6 +263,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
   // Desired torque
   tau_d << tau_task + tau_nullspace + C + g;
   // std::cout << tau_d << std::endl;
+
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
   }
@@ -410,9 +419,9 @@ void CartesianImpedanceController::joy_callback(const sensor_msgs::Joy::ConstPtr
     if (msg->axes[i] >= threshold || msg->axes[i] <= -threshold)
     {
       if (i >= 0 && i <= 2)
-        K = 0.0002;
+        K = 0.0005;
       else if (i >= 3 && i <= 5)
-        K = 0.0002;
+        K = 0.0005;
 
       spacenav_motion(i) = K * msg->axes[i];
     }

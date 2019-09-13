@@ -421,6 +421,15 @@ int main(int argc, char **argv){
           flag_print = 4;
         }
 
+        // Force Limit -------------------------------------
+        if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+          flag_drilling = DRILLUP;
+          pi << position_d;
+          pf << p_roof;
+          t = 0;  // reset time
+        }
+        // -------------------------------------------------
+
         if( panda.K_F_ext_hat_K[2] > min_force_limit ){
           // --> DRILL <--
           ti = 0.0;
