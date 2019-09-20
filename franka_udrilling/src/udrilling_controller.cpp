@@ -110,6 +110,10 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
 
     count = 0;
 
+    // Create pose publishers
+    poseEE_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/robot_poseEE", 20);
+    poseEE_d_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/robot_poseEE_d", 20);
+
     return true;
 }
 
@@ -161,6 +165,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
     Eigen::Vector3d position(transform.translation());
+    Eigen::Quaterniond orientation(transform.linear());
     Eigen::Matrix3d R(transform.rotation());
     
 
@@ -290,6 +295,10 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // update last integral error
     last_integral_error = integral_error; 
+
+    // update pose publishers
+    posePublisherCallback(poseEE_pub, position, orientation);
+    posePublisherCallback(poseEE_d_pub, position_d_, orientation_d_);
 
     // ---------------------------------------------------------------------------
     // Write to file
@@ -442,6 +451,28 @@ void uDrillingController::complianceParamCallback(franka_udrilling::compliance_p
     nullspace_stiffness_target_ = config.Kp_nullspace * nullspace_stiffness_target_.setIdentity();
 
 }
+
+
+void uDrillingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation){
+
+    geometry_msgs::PoseStamped robot_pose;
+
+    robot_pose.pose.position.x = position[0];
+    robot_pose.pose.position.y = position[1];
+    robot_pose.pose.position.z = position[2];
+
+    robot_pose.pose.orientation.x = orientation.vec()[0];
+    robot_pose.pose.orientation.y = orientation.vec()[1];
+    robot_pose.pose.orientation.z = orientation.vec()[2];
+    robot_pose.pose.orientation.w = orientation.w();
+
+    // run pose publisher
+    robot_pose.header.frame_id = "/panda_link0";
+    robot_pose.header.stamp = ros::Time::now();
+    pose_pub.publish(robot_pose);
+
+}
+
 
 } // namespace franka_udrilling
 

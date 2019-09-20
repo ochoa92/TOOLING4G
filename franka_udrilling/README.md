@@ -12,3 +12,6 @@ catkin_make --pkg package_name
 
 # Example:
 roslaunch franka_udrilling udrilling_test.launch
+
+# To recover from errors and reflexes the franka_control::ErrorRecoveryAction can be called. That can be done from an action client or by simply publishing on the action goal topic:
+rostopic pub -1 /franka_control/error_recovery/goal franka_control/ErrorRecoveryActionGoal "{}"

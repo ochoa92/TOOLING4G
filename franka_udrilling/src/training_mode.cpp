@@ -1,15 +1,5 @@
 #include <franka_udrilling/training_mode.h>
 
-#include <cmath>
-#include <memory>
-
-#include <controller_interface/controller_base.h>
-#include <franka/robot_state.h>
-#include <pluginlib/class_list_macros.h>
-#include <ros/ros.h>
-#include <franka/robot.h>
-
-
 namespace franka_udrilling {
 
 
@@ -20,27 +10,12 @@ TrainingMode::TrainingMode(){
   file.open(path, std::ofstream::out);
   file << " t p_x p_y p_z Qx Qy Qz Qw Fx Fy Fz\n";
   file << " s m m m Qunit Qunit Qunit Qunit N N N\n";
-
-  // points
-  std::string path_points;
-  path_points = "/home/helio/kst/udrilling/mould/points";
-  points.open(path_points, std::ofstream::out);
-
-  // desired orientation
-  std::string path_desired_o;
-  path_desired_o = "/home/helio/kst/udrilling/mould/desired_o";
-  desired_o.open(path_desired_o, std::ofstream::out);
-
 }
+
+
 TrainingMode::~TrainingMode(){
   std::cout << "Files closed!" << std::endl << std::endl;
   file.close();
-
-  // points
-  points.close();
-
-  // desired orientation
-  desired_o.close();
 }
 
 
@@ -100,7 +75,8 @@ bool TrainingMode::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& 
     }
   }
 
-  spacenav_sub = node_handle.subscribe("/spacenav/joy", 20, &TrainingMode::joyCallback, this);
+  // Create publisher
+  pose_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/robot_poseEE", 20);
 
   count = 0;
 
@@ -123,21 +99,8 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
   Eigen::Quaterniond orientation(transform.linear());
   orientation.normalize();
 
-  ros::Duration d(0.5);
-  time_lapse = ros::Time::now();
-  if (spacenav_button_1 == 1 && time_lapse - last_time > d) {
-    last_time = time_lapse;
-    if (flag_mode == 0)
-      flag_mode = 1;
-    else if (flag_mode == 1)
-      flag_mode = 2;
-    else if (flag_mode == 2)
-      flag_mode = 3;
-    else if (flag_mode == 3)
-      flag_mode = 2;
-  }
+  posePublisherCallback(pose_pub, robot_pose, position, orientation);
 
-  // compute control
   // allocate variables
   Eigen::VectorXd tau_task(7), tau_d(7);
   tau_task << 0, 0, 0, 0, 0, 0, 0;
@@ -150,46 +113,6 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
   for (size_t i = 0; i < 7; ++i) {
     joint_handles_[i].setCommand(tau_d(i));
-  }
-
-  switch (flag_mode) {
-    case 0:
-      if(flag_print == 0){
-        std::cout << CLEANWINDOW << "PRESS SPACENAV BUTTON 1 TO SAVE THE DESIRED ORIENTATION..." << std::endl;
-        flag_print = 1;
-      }
-      break;
-
-    case 1:
-      if(flag_print == 1){
-        desired_o << " " << orientation.vec()[0] << " "
-                         << orientation.vec()[1] << " "
-                         << orientation.vec()[2] << " "
-                         << orientation.w() << "\n";
-        std::cout << CLEANWINDOW << "ORIENTATION SAVED! AGAIN TO SAVE THE FIRST POINT OF THE MOULD..." << std::endl;
-        flag_print = 2;
-      }
-      break;
-
-    case 2:
-      if(flag_print == 2){
-        points << " " << position[0] << " "
-                      << position[1] << " "
-                      << position[2] << "\n";
-        std::cout << CLEANWINDOW << "POINT SAVED. CONTINUE PRESSING TO SAVE MORE POINTS..." << std::endl;
-        flag_print = 3;
-      }
-      break;
-
-    case 3:
-      if(flag_print == 3){
-        points << " " << position[0] << " "
-                      << position[1] << " "
-                      << position[2] << "\n";
-        std::cout << CLEANWINDOW << "CONTINUE PRESSING TO SAVE MORE POINTS..." << std::endl;
-        flag_print = 2;
-      }
-      break;
   }
 
   // ---------------------------------------------------------------------------
@@ -224,9 +147,22 @@ Eigen::Matrix<double, 7, 1> TrainingMode::saturateTorqueRate(
 }
 
 
-void TrainingMode::joyCallback(const sensor_msgs::Joy::ConstPtr& msg) {
-  spacenav_button_1 = msg->buttons[0];
-  spacenav_button_2 = msg->buttons[1];
+void TrainingMode::posePublisherCallback(ros::Publisher& pose_pub, geometry_msgs::PoseStamped& robot_pose, Eigen::Vector3d& position, Eigen::Quaterniond& orientation){
+
+  robot_pose.pose.position.x = position[0];
+  robot_pose.pose.position.y = position[1];
+  robot_pose.pose.position.z = position[2];
+
+  robot_pose.pose.orientation.x = orientation.vec()[0];
+  robot_pose.pose.orientation.y = orientation.vec()[1];
+  robot_pose.pose.orientation.z = orientation.vec()[2];
+  robot_pose.pose.orientation.w = orientation.w();
+
+  // run pose publisher
+  robot_pose.header.frame_id = "/panda_link0";
+  robot_pose.header.stamp = ros::Time::now();
+  pose_pub.publish(robot_pose);
+
 }
 
 

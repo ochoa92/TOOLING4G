@@ -1,8 +1,8 @@
 // =============================================================================
 // Name        : training_mode.h
 // Author      : Hélio Ochoa
-// Description : Switches to torque controller and allows the user to train the
-//               robot.
+// Description : Switches to gravity compensation and allows the user to 
+//               manipulate the robot               
 // =============================================================================
 #pragma once
 
@@ -10,26 +10,39 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <cmath>
 
 #include <controller_interface/multi_interface_controller.h>
+#include <controller_interface/controller_base.h>
+
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
+
+#include <ros/ros.h>
 #include <ros/node_handle.h>
 #include <ros/time.h>
+
 #include <Eigen/Dense>
-#include <sensor_msgs/Joy.h>
 
 #include <franka_hw/franka_model_interface.h>
 #include <franka_hw/franka_state_interface.h>
 
+#include <franka/robot_state.h>
+#include <franka/robot.h>
+
+#include <pluginlib/class_list_macros.h>
+
+#include <sensor_msgs/Joy.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #define CLEANWINDOW "\e[2J\e[H"
 
+
 namespace franka_udrilling {
 
-class TrainingMode : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface,
+class TrainingMode : public controller_interface::MultiInterfaceController< franka_hw::FrankaModelInterface,
                                                                             hardware_interface::EffortJointInterface,
-                                                                            franka_hw::FrankaStateInterface> {
+                                                                            franka_hw::FrankaStateInterface > {
 
   public:
     TrainingMode();
@@ -39,11 +52,9 @@ class TrainingMode : public controller_interface::MultiInterfaceController<frank
     void update(const ros::Time&, const ros::Duration& period) override;
 
   private:
-
     // Saturation
-    Eigen::Matrix<double, 7, 1> saturateTorqueRate(
-        const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
-        const Eigen::Matrix<double, 7, 1>& tau_J_d);  // NOLINT (readability-identifier-naming)
+    Eigen::Matrix<double, 7, 1> saturateTorqueRate(const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
+                                                   const Eigen::Matrix<double, 7, 1>& tau_J_d);  // NOLINT (readability-identifier-naming)
 
     std::unique_ptr<franka_hw::FrankaStateHandle> state_handle_;
     std::unique_ptr<franka_hw::FrankaModelHandle> model_handle_;
@@ -53,17 +64,11 @@ class TrainingMode : public controller_interface::MultiInterfaceController<frank
 
     int count; // file counter
     std::ofstream file;
-    std::ofstream desired_o;
-    std::ofstream points;
-    int flag_mode = 0;
-    int flag_print = 0;
 
-    // spacenav
-    ros::Subscriber spacenav_sub;
-    ros::Time time_lapse, last_time; // Time variables to change modes with spacenav
-    int spacenav_button_1 = 0;
-    int spacenav_button_2 = 0;
-    void joyCallback(const sensor_msgs::Joy::ConstPtr& msg);
+    // Pose publisher
+    ros::Publisher pose_pub;
+    geometry_msgs::PoseStamped robot_pose;
+    void posePublisherCallback(ros::Publisher& pose_pub, geometry_msgs::PoseStamped& robot_pose, Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
 
 };
 

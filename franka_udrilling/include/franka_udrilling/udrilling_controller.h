@@ -118,6 +118,11 @@ class uDrillingController : public controller_interface::MultiInterfaceControlle
                                              const Eigen::Matrix<double, N, 1> maxJointLimits, 
                                              const Eigen::Matrix<double, N, 1> minJointLimits );                                                                               
 
+        // pose publisher
+        ros::Publisher poseEE_pub;
+        ros::Publisher poseEE_d_pub;
+        void posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
+
 };
 
 }  // namespace franka_udrilling
