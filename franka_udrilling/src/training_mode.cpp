@@ -8,8 +8,8 @@ TrainingMode::TrainingMode(){
   std::string path;
   path = "/home/helio/kst/udrilling/user_pattern";
   file.open(path, std::ofstream::out);
-  file << " t p_x p_y p_z Qx Qy Qz Qw Fx Fy Fz\n";
-  file << " s m m m Qunit Qunit Qunit Qunit N N N\n";
+  file << " t p_x p_y p_z Q_x Q_y Q_z Q_w Fx Fy Fz pEE_x pEE_y pEE_z\n";
+  file << " s m m m Qunit Qunit Qunit Qunit N N N m m m\n";
 }
 
 
@@ -94,10 +94,13 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); // NOLINT (readability-identifier-naming)
   Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame
 
-  Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
+  Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data())); // Measured end effector pose in base frame.
   Eigen::Vector3d position(transform.translation());
   Eigen::Quaterniond orientation(transform.linear());
-  orientation.normalize();
+  Eigen::Matrix3d R(transform.rotation());
+
+  Eigen::Vector3d positionEE(R*position); // Measured end effector pose in end effector frame.
+
 
   posePublisherCallback(pose_pub, robot_pose, position, orientation);
 
@@ -130,7 +133,10 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
        << orientation.w() << " "
        << EE_force[0] << " "
        << EE_force[1] << " "
-       << EE_force[2] << "\n";
+       << EE_force[2] << " "
+       << positionEE[0] << " "
+       << positionEE[1] << " "
+       << positionEE[2] << "\n";
 
 }
 

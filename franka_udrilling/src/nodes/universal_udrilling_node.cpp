@@ -209,7 +209,7 @@ int main(int argc, char **argv){
   Eigen::Vector3d p_roof;
   p_roof.setZero();
   double max_force_limit = 12.0;
-  double min_force_limit = 4.0;
+  double min_force_limit = 4.0; // |: 4.0 (N) & \/: 2.0 (N)
 
 
   // ---------------------------------------------------------------------------
@@ -275,7 +275,7 @@ int main(int argc, char **argv){
       case STATIONDOWN:
         // --> STATION DOWN <--
         ti = 0.0;
-        tf = 5.0;
+        tf = 3.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -300,7 +300,7 @@ int main(int argc, char **argv){
       case STATIONUP:
         // --> STATION UP <--
         ti = 0.0;
-        tf = 4.0;
+        tf = 3.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -330,7 +330,7 @@ int main(int argc, char **argv){
 
         // --> MOVE TO MOULD POINT <--
         ti = 0.0;
-        tf = 4.0;
+        tf = 3.0;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
@@ -359,7 +359,7 @@ int main(int argc, char **argv){
       case POINTDOWN:
         // --> POINT DOWN <--
         ti = 0.0;
-        tf = 4.0;
+        tf = 3.0;
         delta_t1 = delta_t/(tf-ti);
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
@@ -385,7 +385,12 @@ int main(int argc, char **argv){
         break;
 
       // -----------------------------------------------------------------------
-      case PREDRILL:
+      case PREDRILL:     
+        if(flag_print == 2){
+          std::cout << CLEANWINDOW << "ROBOT IS PRE-DRILLING..." << std::endl;
+          flag_print = 3;
+        }
+
         // --> PRE DRILL <--
         ti = 0.0;
         tf = 15.0;
@@ -393,17 +398,11 @@ int main(int argc, char **argv){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
         else if(t > tf){
-          if(flag_print == 2){
-            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV TO START DRILLING OR WAIT UNTIL Fz > " << min_force_limit << " (N)!" << std::endl;
-            flag_print = 3;
-          }
-          if( (panda.spacenav_button_1 == 1) || (panda.K_F_ext_hat_K[2] > min_force_limit) ){
-            flag_drilling = DRILL;
-            pi << position_d;
-            pf << pi + Rd*delta_drill;
-            p_roof << pi + Rd*delta_roof;
-            t = 0;  // reset time
-          }
+          flag_drilling = DRILL;
+          pi << position_d;
+          pf << pi + Rd*delta_drill;
+          p_roof << pi + Rd*delta_roof;
+          t = 0;  // reset time
         }
         t = t + delta_t;
 
