@@ -6,7 +6,6 @@ import array as arr
 from matplotlib import pyplot
 from scipy import signal
 
-import tf.transformations
 from franka_msgs.msg import FrankaState
 from geometry_msgs.msg import PoseStamped
 
@@ -19,28 +18,13 @@ class Franka(object):
         self.orientation_d = None
 
         self.EE_force = None
-
+        
         self.state_sub = rospy.Subscriber("/franka_state_controller/franka_states", FrankaState, self.franka_state_callback)
-        self.desired_state_sub = rospy.Subscriber("/panda_equilibrium_pose", PoseStamped, self.desired_state_callback)
+        self.pose_sub = rospy.Subscriber("/robot_poseEE", PoseStamped, self.pose_sub_callback)
+        self.pose_d_sub = rospy.Subscriber("/robot_poseEE_d", PoseStamped, self.pose_sub_d_callback)
 
     def franka_state_callback(self, msg):
-        
-        orientation = tf.transformations.quaternion_from_matrix(np.transpose(np.reshape(msg.O_T_EE,(4, 4))))
-        self.orientation = orientation / np.linalg.norm(orientation)    # normalize the quaternion
-        
-        position_x = msg.O_T_EE[12]
-        position_y = msg.O_T_EE[13]
-        position_z = msg.O_T_EE[14]
-        self.position = [position_x, position_y, position_z]
-
         self.EE_force = [msg.K_F_ext_hat_K[0], msg.K_F_ext_hat_K[1], msg.K_F_ext_hat_K[2]]
-
-    def franka_pose(self):
-        if (self.position or self.orientation) is None:
-            rospy.logwarn("\nFranka pose haven't been filled yet.")
-            return None
-        else:
-            return self.position, self.orientation
 
     def franka_EE_force(self):
         if (self.EE_force) is None:
@@ -49,17 +33,27 @@ class Franka(object):
         else:
             return self.EE_force
 
-    def desired_state_callback(self, msg):
+    def pose_sub_callback(self, msg):
+        self.position = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
+        self.orientation = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+
+    def robot_pose(self):
+        if (self.position or self.orientation) is None:
+            rospy.logwarn("\nRobot pose haven't been filled yet.")
+            return None
+        else:
+            return self.position, self.orientation
+
+    def pose_sub_d_callback(self, msg):
         self.position_d = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
         self.orientation_d = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
 
-    def franka_pose_desired(self):
+    def robot_pose_d(self):
         if (self.position_d or self.orientation_d) is None:
-            rospy.logwarn("\nFranka pose desired haven't been filled yet.")
+            rospy.logwarn("\nRobot desired pose haven't been filled yet.")
             return None
         else:
             return self.position_d, self.orientation_d
-
 
 
 if __name__ == "__main__":
@@ -92,11 +86,11 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         count = count + 1
 
-        position, orientation = robot.franka_pose()
+        position, orientation = robot.robot_pose()
         # print '\nposition: ', position
         # print '\norientation: ', orientation
 
-        position_d, orientation_d = robot.franka_pose_desired()
+        position_d, orientation_d = robot.robot_pose_d()
         # print '\nposition_d: ', position_d
         # print '\norientation_d: ', orientation_d
 

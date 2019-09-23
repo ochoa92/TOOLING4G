@@ -208,8 +208,8 @@ int main(int argc, char **argv){
   delta_point << 0.0, 0.0, 0.005;
   Eigen::Vector3d p_roof;
   p_roof.setZero();
-  double max_force_limit = 12.0;
-  double min_force_limit = 4.0; // |: 4.0 (N) & \/: 2.0 (N)
+  double Fz_max = 12.0;
+  double Fz_min = 2.0; // |: 4.0 (N) & \/: 2.0 (N)
 
 
   // ---------------------------------------------------------------------------
@@ -421,7 +421,7 @@ int main(int argc, char **argv){
         }
 
         // Force Limit -------------------------------------
-        if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+        if( panda.K_F_ext_hat_K[2] > Fz_max ){
           flag_drilling = DRILLUP;
           pi << position_d;
           pf << p_roof;
@@ -429,7 +429,7 @@ int main(int argc, char **argv){
         }
         // -------------------------------------------------
 
-        if( panda.K_F_ext_hat_K[2] > min_force_limit ){
+        if( panda.K_F_ext_hat_K[2] > Fz_min ){
           // --> DRILL <--
           ti = 0.0;
           tf = 0.6;
@@ -496,7 +496,7 @@ int main(int argc, char **argv){
         else if(t > tf){
           flag_drilling = DRILL;
           pi << position_d;
-          if( panda.K_F_ext_hat_K[2] > max_force_limit ){
+          if( panda.K_F_ext_hat_K[2] > Fz_max ){
             pf << pi;
           }
           else{
