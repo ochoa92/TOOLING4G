@@ -122,8 +122,8 @@ int main(int argc, char **argv){
     //                        GET MOULD POINTS FROM FILE
     Eigen::MatrixXd P;  // matrix to save the mould points
     std::ifstream points_file;
-    points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
-    // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
+    // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
+    points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
     int n_points = 0;
     P.resize(3, n_points + 1);
     if(points_file.is_open()){
@@ -187,20 +187,24 @@ int main(int argc, char **argv){
 
     // =============================================================================
     //                     DRILLING TRAJECTORY CONDITIONS
-    Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point;
+    Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal;
     delta_drill << 0.0, 0.0, 0.001;
-    delta_roof << 0.0, 0.0, 0.004;  // 0.001
-    delta_predrill << 0.0, 0.0, 0.007; //0.01
-    delta_point << 0.0, 0.0, 0.002; // 0.005
+    delta_roof << 0.0, 0.0, 0.004;  
     
-    Eigen::Vector3d p_roof;
+    delta_predrill << 0.0, 0.0, 0.007; 
+    delta_point << 0.0, 0.0, 0.002;
+
+    delta_goal << 0.0, 0.0, 0.008;  // delta_goal(12mm) - ( delta_predrill(7mm) - delta_point(2mm) ) + 1
+    
+    Eigen::Vector3d p_roof, p_goal;
     p_roof.setZero();
+    p_goal.setZero();
     
 
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
     double Fz_max = 10.0;
-    double Fz_min = 3.0;
+    // double Fz_min = 4.0;
 
 
     // =============================================================================
@@ -215,6 +219,15 @@ int main(int argc, char **argv){
     int flag_station = 0;
     int flag_move2point = 0;
     int n_points_done = 0;
+    double result = 0.0;
+
+    // change compliance parameters
+    int systemRet = 0;
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1600.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 90.0");
+    if(systemRet == -1){
+        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+    }
     
     ros::Rate loop_rate(1000);
     while(ros::ok()){
@@ -352,7 +365,8 @@ int main(int argc, char **argv){
                     flag_drilling = DRILL;
                     pi << position_d;
                     pf << pi + Rd*delta_drill;
-                    p_roof << pi + Rd*delta_roof;
+                    p_roof << pi - Rd*delta_roof;
+                    p_goal << pi + Rd*delta_goal;
                     t = 0;  // reset time
                 }
                 t = t + delta_t;
@@ -377,7 +391,11 @@ int main(int argc, char **argv){
                     pf << pi;
                 }
                 ///////////////////////////////////////////////
-                if( panda.K_F_ext_hat_K[2] > Fz_min ){
+                O_T_EE = panda.O_T_EE;
+                pose = panda.robotPose(O_T_EE);  // get current pose
+                result = pose(2) - p_goal(2);
+                if( result > 0.0 ){
+                // if( panda.K_F_ext_hat_K[2] > Fz_min ){
                     // << DRILL >>
                     ti = 0.0;
                     tf = 1.5;
@@ -435,8 +453,8 @@ int main(int argc, char **argv){
             // ======================================================================
             case DRILLDOWN:
                 // << DRILLDOWN >> 
-                ti = 2.5;
-                tf = 3.5;
+                ti = 1.0;
+                tf = 2.0;
                 if( (t >= ti) && (t <= tf) ){
                     position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                 }
@@ -486,6 +504,8 @@ int main(int argc, char **argv){
                     }
 
                     flag_drilling = MOVE2STATION;
+                    flag_station = 0;
+                    flag_move2point = 0;
                     pi << position_d;
                     pf << S(0), S(1), pi[2];
                     delta_up << 0.0, 0.0, 0.3;
@@ -532,7 +552,7 @@ int main(int argc, char **argv){
              
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
-        // panda.posePublisherCallback(position_d, orientation_d);
+        panda.posePublisherCallback(position_d, orientation_d);
 
         // ===========================================================================
         //                     TF AND VISUALIZATION MARKERS
