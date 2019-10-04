@@ -4,16 +4,16 @@ namespace franka_udrilling {
 
 // ----------------------------------------------------------------------------
 uDrillingController::uDrillingController(){
-    // std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
-    // tracking_file.open("/home/helio/kst/udrilling/udrilling_controller", std::ofstream::out);
-    // tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz\n";
-    // tracking_file << "s m m m m m m rad rad rad rad rad rad N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad\n";
+    std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
+    tracking_file.open("/home/helio/kst/udrilling/udrilling_controller", std::ofstream::out);
+    tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz\n";
+    tracking_file << "s m m m m m m rad rad rad rad rad rad N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad\n";
 }
 
 // ----------------------------------------------------------------------------
 uDrillingController::~uDrillingController(){
-    // std::cout << "\nTracking file closed!" << std::endl << std::endl;
-    // tracking_file.close();
+    std::cout << "\nTracking file closed!" << std::endl << std::endl;
+    tracking_file.close();
 }
 
 // ----------------------------------------------------------------------------
@@ -309,36 +309,36 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Vector3d position_EE(R*position); // current position in EE frame
     Eigen::Vector3d position_EE_d_(R_d_*position_d_); // current position in EE frame
 
-    // count++;
-    // double TIME = count/1000.0;
-    // tracking_file << TIME << " "
-    //               << position[0] << " " << position_d_[0] << " "
-    //               << position[1] << " " << position_d_[1] << " "
-    //               << position[2] << " " << position_d_[2] << " "
-    //               << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
-    //               << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
-    //               << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
-    //               << EE_force[0] << " " 
-    //               << EE_force[1] << " " 
-    //               << EE_force[2] << " " 
-    //               << O_force[0] << " "
-    //               << O_force[1] << " "
-    //               << O_force[2] << " "
-    //               << error[0] << " "
-    //               << error[1] << " "
-    //               << error[2] << " "
-    //               << error[3] << " "
-    //               << error[4] << " "
-    //               << error[5] << " "
-    //               << position_EE[0] << " " << position_EE_d_[0] << " "
-    //               << position_EE[1] << " " << position_EE_d_[1] << " "
-    //               << position_EE[2] << " " << position_EE_d_[2] << " "
-    //               << integral_error[0] << " "
-    //               << integral_error[1] << " "
-    //               << integral_error[2] << " "
-    //               << integral_error[3] << " "
-    //               << integral_error[4] << " "
-    //               << integral_error[5] << "\n";
+    count++;
+    double TIME = count/1000.0;
+    tracking_file << TIME << " "
+                  << position[0] << " " << position_d_[0] << " "
+                  << position[1] << " " << position_d_[1] << " "
+                  << position[2] << " " << position_d_[2] << " "
+                  << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
+                  << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
+                  << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
+                  << EE_force[0] << " " 
+                  << EE_force[1] << " " 
+                  << EE_force[2] << " " 
+                  << O_force[0] << " "
+                  << O_force[1] << " "
+                  << O_force[2] << " "
+                  << error[0] << " "
+                  << error[1] << " "
+                  << error[2] << " "
+                  << error[3] << " "
+                  << error[4] << " "
+                  << error[5] << " "
+                  << position_EE[0] << " " << position_EE_d_[0] << " "
+                  << position_EE[1] << " " << position_EE_d_[1] << " "
+                  << position_EE[2] << " " << position_EE_d_[2] << " "
+                  << integral_error[0] << " "
+                  << integral_error[1] << " "
+                  << integral_error[2] << " "
+                  << integral_error[3] << " "
+                  << integral_error[4] << " "
+                  << integral_error[5] << "\n";
 
     // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;           
 

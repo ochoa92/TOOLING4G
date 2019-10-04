@@ -108,6 +108,7 @@ add_library(${PROJECT_NAME}
   src/spacenav.cpp
   src/co_manipulation_mode.cpp
   src/udrilling_controller.cpp
+  src/udrilling_state.cpp
 )
 
 ## Add cmake target dependencies of the library
