@@ -191,10 +191,10 @@ int main(int argc, char **argv){
     delta_drill << 0.0, 0.0, 0.001;
     delta_roof << 0.0, 0.0, 0.001;  
     
-    delta_predrill << 0.0, 0.0, 0.003; 
-    delta_point << 0.0, 0.0, 0.005;
+    delta_predrill << 0.0, 0.0, 0.005; 
+    delta_point << 0.0, 0.0, 0.003;
 
-    delta_goal << 0.0, 0.0, 0.014;
+    delta_goal << 0.0, 0.0, 0.012;
     delta_limit << 0.0, 0.0, 0.016;
     
     Eigen::Vector3d p_roof, p_goal, p_limit, p_hole;
@@ -206,7 +206,7 @@ int main(int argc, char **argv){
 
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
-    double Fz_max = 10.0;
+    double Fz_max = 12.0;
     // double Fz_min = 4.0;
 
 
@@ -379,7 +379,7 @@ int main(int argc, char **argv){
 
                 // << PRE DRILL >>
                 ti = 0.0;
-                tf = 15.0;
+                tf = 10.0;
                 if( (t >= ti) && (t <= tf) ){
                     position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                 }
@@ -432,7 +432,7 @@ int main(int argc, char **argv){
                 // if( panda.K_F_ext_hat_K[2] > Fz_min ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 1.5;
+                    tf = 1.0;
                     if( (t >= ti) && (t <= tf) ){
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }
@@ -579,6 +579,7 @@ int main(int argc, char **argv){
 
                     // update p_hole
                     p_hole << pose[0], pose[1], pose[2];
+                    delta_drill << 0.0, 0.0, 0.002;
                     flag_lubrication = 1;
                 }
 
