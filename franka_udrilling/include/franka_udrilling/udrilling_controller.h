@@ -30,6 +30,7 @@
 #include <ros/time.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <dynamic_reconfigure/server.h>
+#include <geometry_msgs/Twist.h>
 
 #include <Eigen/Dense>
 
@@ -122,6 +123,10 @@ class uDrillingController : public controller_interface::MultiInterfaceControlle
         ros::Publisher poseEE_pub;
         ros::Publisher poseEE_d_pub;
         void posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
+
+        // error publisher
+        ros::Publisher error_pub;
+        void errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error);
 
 };
 

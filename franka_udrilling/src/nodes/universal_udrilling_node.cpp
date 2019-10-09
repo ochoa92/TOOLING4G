@@ -122,8 +122,8 @@ int main(int argc, char **argv){
     //                        GET MOULD POINTS FROM FILE
     Eigen::MatrixXd P;  // matrix to save the mould points
     std::ifstream points_file;
-    // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
-    points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
+    points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
+    // points_file.open("/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_line_points");
     int n_points = 0;
     P.resize(3, n_points + 1);
     if(points_file.is_open()){
@@ -189,7 +189,7 @@ int main(int argc, char **argv){
     //                     DRILLING TRAJECTORY CONDITIONS
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal;
     delta_drill << 0.0, 0.0, 0.001;
-    delta_roof << 0.0, 0.0, 0.004;  
+    delta_roof << 0.0, 0.0, 0.003;  
     
     delta_predrill << 0.0, 0.0, 0.007; 
     delta_point << 0.0, 0.0, 0.002;

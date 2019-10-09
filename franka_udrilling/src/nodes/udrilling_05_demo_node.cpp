@@ -230,7 +230,7 @@ int main(int argc, char **argv){
   // change compliance parameters
   int systemRet = 0;
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1600.0");
-  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 90.0");
+  systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 80.0");
   if(systemRet == -1){
     std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
   }

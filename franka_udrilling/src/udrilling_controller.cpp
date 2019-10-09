@@ -114,6 +114,9 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     poseEE_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/robot_poseEE", 20);
     poseEE_d_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/robot_poseEE_d", 20);
 
+    // Create error publisher
+    error_pub = node_handle.advertise<geometry_msgs::Twist>("/robot_error", 20);
+
     return true;
 }
 
@@ -300,6 +303,9 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     posePublisherCallback(poseEE_pub, position, orientation);
     posePublisherCallback(poseEE_d_pub, position_d_, orientation_d_);
 
+    // update error publisher
+    errorPublisherCallback(error_pub, error);
+
     // ---------------------------------------------------------------------------
     // Write to file
     // ---------------------------------------------------------------------------
@@ -309,7 +315,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Vector3d position_EE(R*position); // current position in EE frame
     Eigen::Vector3d position_EE_d_(R_d_*position_d_); // current position in EE frame
 
-    // count++;
+    count++;
     // double TIME = count/1000.0;
     // tracking_file << TIME << " "
     //               << position[0] << " " << position_d_[0] << " "
@@ -470,6 +476,24 @@ void uDrillingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen:
     robot_pose.header.frame_id = "/panda_link0";
     robot_pose.header.stamp = ros::Time::now();
     pose_pub.publish(robot_pose);
+
+}
+
+
+void uDrillingController::errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error){
+    
+    geometry_msgs::Twist robot_error;
+
+    robot_error.linear.x = error[0];
+    robot_error.linear.y = error[1];
+    robot_error.linear.z = error[2];
+
+    robot_error.angular.x = error[3];
+    robot_error.angular.y = error[4];
+    robot_error.angular.z = error[5];
+
+    // run error publisher
+    error_pub.publish(robot_error);
 
 }
 
