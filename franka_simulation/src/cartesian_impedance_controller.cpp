@@ -6,7 +6,7 @@ namespace franka_simulation {
 CartesianImpedanceController::CartesianImpedanceController(){
   std::cout << "Open the file to write!" << std::endl;
   std::string tracking_path;
-  tracking_path = "/home/helio/kst/simulation/cartesian_impedance_controller";
+  tracking_path = "/home/panda/kst/simulation/cartesian_impedance_controller";
   file_tracking.open(tracking_path, std::ofstream::out);
   file_tracking << " t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz\n";
   file_tracking << " s m m m m m m rad rad rad rad rad rad m m m rad rad rad\n";
@@ -113,7 +113,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // Get the controller gains from a file
   // ---------------------------------------------------------------------------
   std::string path_gains;
-  path_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_simulation/controller_gains/compliance_param";
+  path_gains = "/home/panda/catkin_ws/src/TOOLING4G/franka_simulation/controller_gains/compliance_param";
   file_gains.open(path_gains);
   if(file_gains.is_open()){
     file_gains >> Kpx >> Kpy >> Kpz >> Kox >> Koy >> Koz >> Kp_nullspace;
