@@ -204,7 +204,7 @@ int main(int argc, char **argv){
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
     double Fz_max = 12.0;
-    // double Fz_min = 4.0;
+    double Fz_min = 4.0;
 
 
     // =============================================================================
@@ -223,7 +223,7 @@ int main(int argc, char **argv){
 
     // change compliance parameters
     int systemRet = 0;
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1600.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1700.0");
     systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 80.0");
     if(systemRet == -1){
         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
@@ -397,8 +397,8 @@ int main(int argc, char **argv){
                 O_T_EE = panda.O_T_EE;
                 pose = panda.robotPose(O_T_EE);  // get current pose
                 result = pose(2) - p_goal(2);
-                if( result > 0.0 ){
-                // if( panda.K_F_ext_hat_K[2] > Fz_min ){
+                // if( result > 0.0 ){
+                if( panda.K_F_ext_hat_K[2] > Fz_min ){
                     // << DRILL >>
                     ti = 0.0;
                     tf = 1.0;

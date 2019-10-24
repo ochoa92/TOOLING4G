@@ -96,7 +96,7 @@ int main(int argc, char **argv){
     // =============================================================================
     //                   GET THE DESIRED ROTATION FROM FILE
     std::ifstream orientation_file;
-    orientation_file.open("~/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_orientation");
+    orientation_file.open("/home/panda/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_orientation");
 
     double qx, qy, qz, qw;
     if(orientation_file.is_open()){
@@ -182,7 +182,7 @@ int main(int argc, char **argv){
     
     // move up 
     Eigen::Vector3d delta_up;
-    delta_up << 0.0, 0.0, 0.3;
+    delta_up << 0.0, 0.0, 0.25;
 
 
     // =============================================================================
@@ -206,7 +206,7 @@ int main(int argc, char **argv){
 
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
-    double Fz_max = 12.0;
+    double Fz_max = 14.0;
     // double Fz_min = 4.0;
 
 
@@ -542,7 +542,7 @@ int main(int argc, char **argv){
                     flag_move2point = 0;
                     pi << position_d;
                     pf << S(0), S(1), pi[2];
-                    delta_up << 0.0, 0.0, 0.3;
+                    delta_up << 0.0, 0.0, 0.25;
                     ti = 0.0;
                     tf = 4.0;
                     delta_t1 = delta_t/(tf-ti);
@@ -600,7 +600,7 @@ int main(int argc, char **argv){
                     flag_print = 0;
                     pi << position_d;
                     pf << S(0), S(1), pi[2];
-                    delta_up << 0.0, 0.0, 0.3;
+                    delta_up << 0.0, 0.0, 0.25;
                     ti = 0.0;
                     tf = 4.0;
                     delta_t1 = delta_t/(tf-ti);
