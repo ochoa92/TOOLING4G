@@ -5,7 +5,7 @@ namespace franka_udrilling {
 // ----------------------------------------------------------------------------
 uDrillingController::uDrillingController(){
     // std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
-    // tracking_file.open("/home/helio/kst/udrilling/udrilling_controller", std::ofstream::out);
+    // tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
     // tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz\n";
     // tracking_file << "s m m m m m m rad rad rad rad rad rad N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad\n";
 }

@@ -32,7 +32,7 @@ int main(int argc, char **argv){
   // open file to save pattern data
   std::ofstream file;
   std::string path;
-  path = "/home/helio/kst/udrilling/pattern/spacenav_pattern";
+  path = "/home/panda/kst/udrilling/pattern/spacenav_pattern";
   file.open(path);
   file << " p_xd p_yd p_zd Qxd Qyd Qzd Qwd\n";
 
