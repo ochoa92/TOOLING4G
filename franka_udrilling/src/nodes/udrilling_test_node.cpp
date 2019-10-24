@@ -34,7 +34,7 @@ int main(int argc, char **argv){
   Eigen::MatrixXd POINTS;  // matrix to save the mould points
   std::ifstream file_points;
   std::string path_points;
-  path_points = "/home/helio/kst/udrilling/mould/points";
+  path_points = "/home/panda/kst/udrilling/mould/points";
   file_points.open(path_points);
 
   double X, Y, Z;
@@ -106,7 +106,7 @@ int main(int argc, char **argv){
   // ---------------------------------------------------------------------------
   std::ifstream file_desired_o;
   std::string path_desired_o;
-  path_desired_o = "/home/helio/kst/udrilling/mould/desired_o";
+  path_desired_o = "/home/panda/kst/udrilling/mould/desired_o";
   file_desired_o.open(path_desired_o);
 
   double qx, qy, qz, qw;
