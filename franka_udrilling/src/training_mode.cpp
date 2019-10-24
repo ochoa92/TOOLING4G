@@ -6,7 +6,7 @@ namespace franka_udrilling {
 TrainingMode::TrainingMode(){
   std::cout << "Open the files to write!" << std::endl;
   std::string path;
-  path = "/home/helio/kst/udrilling/user_pattern";
+  path = "/home/panda/kst/udrilling/user_pattern";
   file.open(path, std::ofstream::out);
   file << " t p_x p_y p_z Q_x Q_y Q_z Q_w Fx Fy Fz pEE_x pEE_y pEE_z\n";
   file << " s m m m Qunit Qunit Qunit Qunit N N N m m m\n";

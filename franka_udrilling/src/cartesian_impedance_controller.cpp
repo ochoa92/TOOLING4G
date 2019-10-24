@@ -6,7 +6,7 @@ namespace franka_udrilling {
 CartesianImpedanceController::CartesianImpedanceController(){
   std::cout << "Open the file to write!" << std::endl;
   std::string tracking_path;
-  tracking_path = "/home/helio/kst/udrilling/cartesian_impedance_controller";
+  tracking_path = "/home/panda/kst/udrilling/cartesian_impedance_controller";
   file_tracking.open(tracking_path, std::ofstream::out);
   file_tracking << " t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) Fx_EE Fx_EE_d Fy_EE Fy_EE_d Fz_EE Fz_EE_d Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz\n";
   file_tracking << " s m m m m m m rad rad rad rad rad rad N N N N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad\n";
@@ -148,7 +148,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // Get the controller gains from a file
   // ---------------------------------------------------------------------------
   std::string path_gains;
-  path_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/controller_gains/compliance_param";
+  path_gains = "/home/panda/catkin_ws/src/TOOLING4G/franka_udrilling/controller_gains/compliance_param";
   file_gains.open(path_gains);
   std::string line;
   getline(file_gains, line);  // first line (ignore)
@@ -207,7 +207,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // Get the proporcional force gains from a file
   // ---------------------------------------------------------------------------
   std::string path_force_gains;
-  path_force_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_udrilling/controller_gains/force_param";
+  path_force_gains = "/home/panda/catkin_ws/src/TOOLING4G/franka_udrilling/controller_gains/force_param";
   file_force_gains.open(path_force_gains);
   if(file_force_gains.is_open()){
     file_force_gains >> Kfx >> Kfy >> Kfz;
