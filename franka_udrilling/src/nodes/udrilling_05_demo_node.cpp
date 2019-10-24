@@ -432,7 +432,7 @@ int main(int argc, char **argv){
                 // if( panda.K_F_ext_hat_K[2] > Fz_min ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 1.0;
+                    tf = 0.6;
                     if( (t >= ti) && (t <= tf) ){
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }

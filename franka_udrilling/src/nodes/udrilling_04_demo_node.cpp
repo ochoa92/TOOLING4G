@@ -182,14 +182,14 @@ int main(int argc, char **argv){
     
     // move up 
     Eigen::Vector3d delta_up;
-    delta_up << 0.0, 0.0, 0.3;
+    delta_up << 0.0, 0.0, 0.25;
 
 
     // =============================================================================
     //                     DRILLING TRAJECTORY CONDITIONS
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;
     delta_drill << 0.0, 0.0, 0.001;
-    delta_roof << 0.0, 0.0, 0.001;  
+    delta_roof << 0.0, 0.0, 0.003;  
     
     delta_predrill << 0.0, 0.0, 0.005; 
     delta_point << 0.0, 0.0, 0.003;
@@ -206,7 +206,7 @@ int main(int argc, char **argv){
 
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
-    double Fz_max = 12.0;
+    double Fz_max = 8.0;
     // double Fz_min = 4.0;
 
 
@@ -227,8 +227,8 @@ int main(int argc, char **argv){
 
     // change compliance parameters
     int systemRet = 0;
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1400.0");
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
     if(systemRet == -1){
         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
     }
@@ -542,7 +542,7 @@ int main(int argc, char **argv){
                     flag_move2point = 0;
                     pi << position_d;
                     pf << S(0), S(1), pi[2];
-                    delta_up << 0.0, 0.0, 0.3;
+                    delta_up << 0.0, 0.0, 0.25;
                     ti = 0.0;
                     tf = 4.0;
                     delta_t1 = delta_t/(tf-ti);
@@ -600,7 +600,7 @@ int main(int argc, char **argv){
                     flag_print = 0;
                     pi << position_d;
                     pf << S(0), S(1), pi[2];
-                    delta_up << 0.0, 0.0, 0.3;
+                    delta_up << 0.0, 0.0, 0.25;
                     ti = 0.0;
                     tf = 4.0;
                     delta_t1 = delta_t/(tf-ti);
