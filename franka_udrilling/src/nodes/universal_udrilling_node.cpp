@@ -182,14 +182,14 @@ int main(int argc, char **argv){
     
     // move up 
     Eigen::Vector3d delta_up;
-    delta_up << 0.0, 0.0, 0.3;
+    delta_up << 0.0, 0.0, 0.25;
 
 
     // =============================================================================
     //                     DRILLING TRAJECTORY CONDITIONS
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal;
     delta_drill << 0.0, 0.0, 0.001;
-    delta_roof << 0.0, 0.0, 0.001;  
+    delta_roof << 0.0, 0.0, 0.002;  
     
     delta_predrill << 0.0, 0.0, 0.005; 
     delta_point << 0.0, 0.0, 0.003;
@@ -397,11 +397,11 @@ int main(int argc, char **argv){
                 O_T_EE = panda.O_T_EE;
                 pose = panda.robotPose(O_T_EE);  // get current pose
                 result = pose(2) - p_goal(2);
-                // if( result > 0.0 ){
-                if( panda.K_F_ext_hat_K[2] > Fz_min ){
+                if( result > 0.0 ){
+                // if( panda.K_F_ext_hat_K[2] > Fz_min ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 1.0;
+                    tf = 0.6;
                     if( (t >= ti) && (t <= tf) ){
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }
@@ -511,7 +511,7 @@ int main(int argc, char **argv){
                     flag_move2point = 0;
                     pi << position_d;
                     pf << S(0), S(1), pi[2];
-                    delta_up << 0.0, 0.0, 0.3;
+                    delta_up << 0.0, 0.0, 0.25;
                     ti = 0.0;
                     tf = 4.0;
                     delta_t1 = delta_t/(tf-ti);

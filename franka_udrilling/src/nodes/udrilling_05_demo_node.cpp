@@ -189,7 +189,7 @@ int main(int argc, char **argv){
     //                     DRILLING TRAJECTORY CONDITIONS
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;
     delta_drill << 0.0, 0.0, 0.001;
-    delta_roof << 0.0, 0.0, 0.001;  
+    delta_roof << 0.0, 0.0, 0.002;  
     
     delta_predrill << 0.0, 0.0, 0.005; 
     delta_point << 0.0, 0.0, 0.003;
@@ -206,7 +206,7 @@ int main(int argc, char **argv){
 
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
-    double Fz_max = 14.0;
+    double Fz_max = 12.0;
     // double Fz_min = 4.0;
 
 
