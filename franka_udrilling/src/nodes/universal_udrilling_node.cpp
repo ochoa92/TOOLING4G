@@ -49,7 +49,7 @@ int main(int argc, char **argv){
     // POINTS markers use x and y scale for width/height respectively
     points.scale.x = 0.01;
     points.scale.y = 0.01;
-    points.scale.z = 0.01;
+    // points.scale.z = 0.01;
 
     // Set the color -- be sure to set alpha to something non-zero!
     points.color.a = 1.0;
@@ -187,24 +187,97 @@ int main(int argc, char **argv){
 
     // =============================================================================
     //                     DRILLING TRAJECTORY CONDITIONS
-    Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal;
+    Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;;
     delta_drill << 0.0, 0.0, 0.001;
     delta_roof << 0.0, 0.0, 0.002;  
     
     delta_predrill << 0.0, 0.0, 0.005; 
     delta_point << 0.0, 0.0, 0.003;
 
-    delta_goal << 0.0, 0.0, 0.012;
+    delta_goal << 0.0, 0.0, 0.012; 
+    delta_limit << 0.0, 0.0, 0.016;
     
-    Eigen::Vector3d p_roof, p_goal;
+    Eigen::Vector3d p_roof, p_goal, p_limit;
     p_roof.setZero();
     p_goal.setZero();
+    p_limit.setZero();
     
 
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
     double Fz_max = 12.0;
     double Fz_min = 4.0;
+
+
+    // =============================================================================
+    //                              SELECT DRILL LOOP
+    int select_drill = 0;
+    int select_drill_print = 0;
+    int systemRet = 0;
+    ros::Rate loop_rate(1000);
+    while( (ros::ok()) && (select_drill == 0) ){
+
+        if(select_drill_print == 0){
+            std::cout << CLEANWINDOW << "Please select the drill: <6>(0.6mm) | <5>(0.5mm) | <4>(0.4mm)" << std::endl;
+            select_drill_print = 1;
+        }
+
+        if( sf::Keyboard::isKeyPressed(sf::Keyboard::Num6) || sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad6) ){
+
+            if(select_drill_print == 1){
+                std::cout << CLEANWINDOW << "Drill selected: <6>(0.6mm)!!!" << std::endl;
+                select_drill_print = 2;
+            }
+            
+            // change compliance parameters
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1700.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 80.0");
+            if(systemRet == -1){
+                std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+            }
+            select_drill = 1;
+
+            break;
+        }
+        else if( sf::Keyboard::isKeyPressed(sf::Keyboard::Num5) || sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad5) ){
+
+            if(select_drill_print == 1){
+                std::cout << CLEANWINDOW << "Drill selected: <5>(0.5mm)!!!" << std::endl;
+                select_drill_print = 2;
+            }
+            
+            // change compliance parameters
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1500.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 80.0");
+            if(systemRet == -1){
+                std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+            }
+            select_drill = 1;
+
+            break;
+        }
+        else if( sf::Keyboard::isKeyPressed(sf::Keyboard::Num4) || sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad4) ){
+
+            if(select_drill_print == 1){
+                std::cout << CLEANWINDOW << "Drill selected: <4>(0.4mm)!!!" << std::endl;
+                select_drill_print = 2;
+            }
+            
+            // change compliance parameters
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
+            if(systemRet == -1){
+                std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+            }
+            Fz_max = 10.0;
+            select_drill = 1;
+
+            break;
+        }
+     
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 
 
     // =============================================================================
@@ -220,16 +293,7 @@ int main(int argc, char **argv){
     int flag_move2point = 0;
     int n_points_done = 0;
     double result = 0.0;
-
-    // change compliance parameters
-    int systemRet = 0;
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1700.0");
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 80.0");
-    if(systemRet == -1){
-        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-    }
     
-    ros::Rate loop_rate(1000);
     while(ros::ok()){
 
         switch (flag_drilling) { ////////////////////////////////////////////////////
@@ -284,6 +348,13 @@ int main(int argc, char **argv){
                         pi << position_d;
                         pf << P(0, n_points_done), P(1, n_points_done), pi(2);
                         t = 0;  // reset time
+
+                        // change compliance parameters
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.5");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.5");
+                        if(systemRet == -1){
+                            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                        }
                     }
                 }
                 t = t + delta_t;
@@ -370,7 +441,16 @@ int main(int argc, char **argv){
                     p_roof << p_roof + Rd*delta_roof;
                     p_goal << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                     p_goal << p_goal + Rd*delta_goal;
+                    p_limit << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+                    p_limit << p_limit + Rd*delta_limit;
                     t = 0;  // reset time
+
+                    // change compliance parameters
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+                    if(systemRet == -1){
+                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    }
                 }
                 t = t + delta_t;
 
@@ -464,7 +544,7 @@ int main(int argc, char **argv){
                 else if(t > tf){
                     flag_drilling = DRILL;
                     pi << position_d;
-                    if( panda.K_F_ext_hat_K[2] > Fz_max ){
+                    if( pi(2) < p_limit(2) ){
                         pf << pi;
                     }
                     else{

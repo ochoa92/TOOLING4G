@@ -10,6 +10,7 @@
 #include <sstream>
 #include <fstream>
 #include <math.h>
+#include <cmath>
 #include <SFML/Window/Keyboard.hpp>
 #include <Eigen/Dense>
 

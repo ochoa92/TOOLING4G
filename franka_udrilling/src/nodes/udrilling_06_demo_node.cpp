@@ -46,7 +46,7 @@ int main(int argc, char **argv){
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
-  points.scale.z = 0.01;
+  // points.scale.z = 0.01;
 
   // Set the color -- be sure to set alpha to something non-zero!
   points.color.a = 1.0;
