@@ -68,6 +68,7 @@ catkin_package(
 add_library(${PROJECT_NAME}
   src/panda_kdl.cpp
   src/cartesian_impedance_controller.cpp;
+  src/spacenav.cpp;
 )
 
 ## Add cmake target dependencies of the library
@@ -97,11 +98,13 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 ## -----------------------------------------------------------------------------
 ## Declare a C++ executable
 add_executable(test_panda_kdl src/nodes/test_panda_kdl.cpp)
+add_executable(simulation_spacenav_node src/nodes/simulation_spacenav_node.cpp)
 
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 target_link_libraries(test_panda_kdl ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(simulation_spacenav_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 
 ## -----------------------------------------------------------------------------
 

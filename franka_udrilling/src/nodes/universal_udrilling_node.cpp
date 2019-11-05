@@ -264,12 +264,13 @@ int main(int argc, char **argv){
             }
             
             // change compliance parameters
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1300.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
             Fz_max = 10.0;
+            delta_predrill << 0.0, 0.0, 0.006;
             select_drill = 1;
 
             break;
