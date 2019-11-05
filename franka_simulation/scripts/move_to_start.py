@@ -58,7 +58,7 @@ if __name__ == '__main__':
     rospy.sleep(1)
 
     #move robot to start position
-    moveJoint ([0, -np.pi/4, 0, -3*np.pi/2, 0, np.pi/2, np.pi/4])
+    moveJoint ([0, 0, 0, -np.pi/2, 0, np.pi/2, np.pi/4])
     moveFingers ([0,0])
 
 

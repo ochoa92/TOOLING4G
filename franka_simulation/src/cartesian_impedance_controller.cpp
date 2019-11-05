@@ -106,7 +106,7 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, r
 
 void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
 
-    q_start << 0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4;
+    q_start << 0, 0, 0, -M_PI_4, 0, M_PI_2, M_PI_4;
     FK(forward_kinematics, q_start);
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
