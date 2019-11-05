@@ -63,7 +63,7 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, r
     // Get number of joints
     n_joints = kdl_chain.getNrOfJoints();
 
-    sub_equilibrium_pose_ = node_handle.subscribe("/panda_equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this, ros::TransportHints().reliable().tcpNoDelay());
+    sub_equilibrium_pose_ = node_handle.subscribe("/panda_equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this);
 
     poseEE_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/panda_poseEE", 20);
 
@@ -169,7 +169,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     // ---------------------------------------------------------------------------
     // get state variables
     // ---------------------------------------------------------------------------
-    for (size_t i = 0; i < 7; ++i) {
+    for (int i = 0; i < 7; ++i) {
         q(i) = joint_handles_[i].getPosition();
         dq(i) = joint_handles_[i].getVelocity();
         effort(i) = joint_handles_[i].getEffort();
@@ -206,10 +206,17 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     // ---------------------------------------------------------------------------
     // Set the controller gains
     // ---------------------------------------------------------------------------
+    // EE frame 
     Eigen::Matrix3d Kp(R_d_ * Kp_d_ * R_d_.transpose());  // cartesian position stiffness
     Eigen::Matrix3d Dp(R_d_ * Dp_d_ * R_d_.transpose());  // cartesian position damping
     Eigen::Matrix3d Ko(R_d_ * Ko_d_ * R_d_.transpose());  // cartesian orientation stiffness
     Eigen::Matrix3d Do(R_d_ * Do_d_ * R_d_.transpose());  // cartesian orientation damping
+    
+    // Base frame
+    // Eigen::Matrix3d Kp(Kp_d_ );  // cartesian position stiffness
+    // Eigen::Matrix3d Dp(Dp_d_);  // cartesian position damping
+    // Eigen::Matrix3d Ko(Ko_d_);  // cartesian orientation stiffness
+    // Eigen::Matrix3d Do(Do_d_);  // cartesian orientation damping
 
     cartesian_stiffness_.setIdentity();
     cartesian_stiffness_.topLeftCorner(3, 3) << Kp;
@@ -334,8 +341,12 @@ double CartesianImpedanceController::wrapTo2PI(double& angle){
 void CartesianImpedanceController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
     
     position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-
+    
+    Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
     orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;
+    if(last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0){
+        orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
+    }
 
 }
 
@@ -362,95 +373,95 @@ void CartesianImpedanceController::posePublisherCallback(ros::Publisher& pose_pu
 
 
 bool CartesianImpedanceController::FK(KDL::Frame& kdl_frame, Eigen::Matrix<double, 7, 1>& q_values){
-  if (q_values.size() != n_joints){
-    return false;
-  }
+    if (q_values.size() != n_joints){
+        return false;
+    }
 
-  // Create KDL FK Solver
-  ChainFkSolverPos_recursive fksolver = ChainFkSolverPos_recursive(kdl_chain);
+    // Create KDL FK Solver
+    ChainFkSolverPos_recursive fksolver = ChainFkSolverPos_recursive(kdl_chain);
 
-  // Create Joint Array for calculations
-  KDL::JntArray joint_position_array = JntArray(n_joints);
+    // Create Joint Array for calculations
+    KDL::JntArray joint_position_array = JntArray(n_joints);
 
-  for (int i = 0; i < n_joints; i++){
-    joint_position_array(i) = q_values[i];
-  }
+    for (int i = 0; i < n_joints; i++){
+        joint_position_array(i) = q_values[i];
+    }
 
-  fksolver.JntToCart(joint_position_array, kdl_frame);
+    fksolver.JntToCart(joint_position_array, kdl_frame);
 
-  return true;
+    return true;
 }
 
 
 bool CartesianImpedanceController::jacobian(KDL::Jacobian &kdl_jacobian, Eigen::Matrix<double, 7, 1> q_values){
-  if(q_values.size() != n_joints){
-    return false;
-  }
-  else{
-    // create KDL Jacobian Solver
-    ChainJntToJacSolver jac_solver = ChainJntToJacSolver(kdl_chain);
-
-    // create Joint Array for calculations
-    KDL::JntArray joint_position_array = JntArray(n_joints);
-
-    // define Jacobian with the correct number of columns
-    kdl_jacobian = Jacobian(n_joints);
-
-    for(int i=0; i<n_joints; i++){
-      joint_position_array(i) = q_values[i];
+    if(q_values.size() != n_joints){
+        return false;
     }
+    else{
+        // create KDL Jacobian Solver
+        ChainJntToJacSolver jac_solver = ChainJntToJacSolver(kdl_chain);
 
-    jac_solver.JntToJac(joint_position_array, kdl_jacobian);
+        // create Joint Array for calculations
+        KDL::JntArray joint_position_array = JntArray(n_joints);
 
-    return true;
-  }
+        // define Jacobian with the correct number of columns
+        kdl_jacobian = Jacobian(n_joints);
+
+        for(int i=0; i<n_joints; i++){
+            joint_position_array(i) = q_values[i];
+        }
+
+        jac_solver.JntToJac(joint_position_array, kdl_jacobian);
+
+        return true;
+    }
 }
 
 
 bool CartesianImpedanceController::dynamic(KDL::JntSpaceInertiaMatrix& kdl_inertia, KDL::JntArray& kdl_coriolis, KDL::JntArray& kdl_gravity, Eigen::Matrix<double, 7, 1>& q_values, Eigen::Matrix<double, 7, 1>& dq_values, Vector& g_vector){
-  if(q_values.size() != n_joints || dq_values.size() != n_joints){
-    return false;
-  }
-  else{
-    // create KDL Dynamic Solver
-    ChainDynParam dyn_solver = ChainDynParam(kdl_chain, g_vector);
-
-    // create Joint Array for calculations
-    KDL::JntArray joint_position_array = JntArray(n_joints);
-    KDL::JntArray joint_velocity_array = JntArray(n_joints);
-
-    // define inertia matrix with correct size (rows and columns)
-    kdl_inertia = JntSpaceInertiaMatrix(n_joints);
-    kdl_coriolis = JntArray(n_joints);
-    kdl_gravity = JntArray(n_joints);
-
-    for(int i=0; i<n_joints; i++){
-      joint_position_array(i) = q_values[i];
-      joint_velocity_array(i) = dq_values[i];
+    if(q_values.size() != n_joints || dq_values.size() != n_joints){
+        return false;
     }
+    else{
+        // create KDL Dynamic Solver
+        ChainDynParam dyn_solver = ChainDynParam(kdl_chain, g_vector);
 
-    dyn_solver.JntToMass(joint_position_array, kdl_inertia);
-    dyn_solver.JntToCoriolis(joint_position_array, joint_velocity_array, kdl_coriolis);
-    dyn_solver.JntToGravity(joint_position_array, kdl_gravity);
+        // create Joint Array for calculations
+        KDL::JntArray joint_position_array = JntArray(n_joints);
+        KDL::JntArray joint_velocity_array = JntArray(n_joints);
 
-    return true;
-  }
+        // define inertia matrix with correct size (rows and columns)
+        kdl_inertia = JntSpaceInertiaMatrix(n_joints);
+        kdl_coriolis = JntArray(n_joints);
+        kdl_gravity = JntArray(n_joints);
+
+        for(int i=0; i<n_joints; i++){
+            joint_position_array(i) = q_values[i];
+            joint_velocity_array(i) = dq_values[i];
+        }
+
+        dyn_solver.JntToMass(joint_position_array, kdl_inertia);
+        dyn_solver.JntToCoriolis(joint_position_array, joint_velocity_array, kdl_coriolis);
+        dyn_solver.JntToGravity(joint_position_array, kdl_gravity);
+
+        return true;
+    }
 }
 
 double CartesianImpedanceController::derivative_computation( const double q_i, const double maxJointLimit_i, const double minJointLimit_i){
-  double result;
-  double average_joint;
-  average_joint = ( maxJointLimit_i + minJointLimit_i) / 2.0;
-  result = - ( ( ( q_i - average_joint ) / pow( ( maxJointLimit_i - minJointLimit_i ), 2 ) ) );
+    double result;
+    double average_joint;
+    average_joint = ( maxJointLimit_i + minJointLimit_i) / 2.0;
+    result = - ( ( ( q_i - average_joint ) / pow( ( maxJointLimit_i - minJointLimit_i ), 2 ) ) );
 
-  return result;
+    return result;
 }
 
 template<int N> // number of joints or DOF
 void CartesianImpedanceController::gradient_mechanical_joint_limit( Eigen::Matrix<double, N, 1>& gradient_mechanical_joint_limit_out, const Eigen::Matrix<double, N, 1> q, const Eigen::Matrix<double, N, 1> maxJointLimits, const Eigen::Matrix<double, N, 1> minJointLimits ){
-  for ( int i = 0; i < q.rows(); i++ ){
-    gradient_mechanical_joint_limit_out(i) = derivative_computation( q(i), maxJointLimits(i), minJointLimits(i) );
-  }
+    for ( int i = 0; i < q.rows(); i++ ){
+        gradient_mechanical_joint_limit_out(i) = derivative_computation( q(i), maxJointLimits(i), minJointLimits(i) );
+    }
 }
 
 
