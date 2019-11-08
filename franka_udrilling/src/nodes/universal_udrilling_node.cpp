@@ -206,7 +206,7 @@ int main(int argc, char **argv){
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
     double Fz_max = 12.0;
-    double Fz_min = 4.0;
+    // double Fz_min = 4.0;
 
 
     // =============================================================================
@@ -331,10 +331,10 @@ int main(int argc, char **argv){
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }
                     else if(t > tf){
-                    flag_station = 2;
-                    pi << position_d;
-                    pf << pi - Rd_station*delta_up;
-                    t = 0;  // reset time
+                        flag_station = 2;
+                        pi << position_d;
+                        pf << pi - Rd_station*delta_up;
+                        t = 0;  // reset time
                     }
                 }
                 // << UP >>
@@ -409,7 +409,15 @@ int main(int argc, char **argv){
                         pi << position_d;
                         pf << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                         pf << pf + Rd*delta_predrill;
-                        t = 0;  // reset time                  
+                        t = 0;  // reset time 
+
+                            // change compliance parameters
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+                        if(systemRet == -1){
+                            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                        }     
+
                     }
                 }
                 t = t + delta_t;
@@ -445,19 +453,12 @@ int main(int argc, char **argv){
                     p_limit << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                     p_limit << p_limit + Rd*delta_limit;
                     t = 0;  // reset time
-
-                    // change compliance parameters
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
-                    if(systemRet == -1){
-                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                    }
                 }
                 t = t + delta_t;
 
                 // INTERRUPT
                 if(panda.spacenav_button_2 == 1){
-                flag_drilling = INTERRUPT;
+                    flag_drilling = INTERRUPT;
                 }
 
                 break;
