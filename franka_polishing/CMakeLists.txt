@@ -66,9 +66,9 @@ find_package(Franka 0.5.0 REQUIRED)
 ################################################
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/compliance_param.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -107,6 +107,7 @@ add_library(${PROJECT_NAME}
   src/spacenav.cpp
   src/training_mode.cpp
   src/co_manipulation_mode.cpp
+  src/polishing_controller.cpp
 )
 
 ## Add cmake target dependencies of the library

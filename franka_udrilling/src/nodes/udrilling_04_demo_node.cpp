@@ -188,7 +188,7 @@ int main(int argc, char **argv){
     // =============================================================================
     //                     DRILLING TRAJECTORY CONDITIONS
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;
-    delta_drill << 0.0, 0.0, 0.001;
+    delta_drill << 0.0, 0.0, 0.0005; // 0.001
     delta_roof << 0.0, 0.0, 0.002;  
     
     delta_predrill << 0.0, 0.0, 0.005; 
@@ -432,7 +432,7 @@ int main(int argc, char **argv){
                 // if( panda.K_F_ext_hat_K[2] > Fz_min ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 0.6;
+                    tf = 0.4;
                     if( (t >= ti) && (t <= tf) ){
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }
@@ -487,8 +487,8 @@ int main(int argc, char **argv){
             // ======================================================================
             case DRILLDOWN:
                 // << DRILLDOWN >> 
-                ti = 1.0;
-                tf = 2.0;
+                ti = 3.0;   // 1.0
+                tf = 4.0;   // 2.0
                 if( (t >= ti) && (t <= tf) ){
                     position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                 }

@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="robot_ip" default="172.16.0.2"/>
+  <!-- <arg name="load_udrilling_tool" default="true" /> -->
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+  </include>
+
+  <!-- launch robot with udrilling_tool -->
+
+  <!-- launch cartesian_impedance_controller -->
+  <rosparam command="load" file="$(find franka_polishing)/config/franka_polishing_controllers.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="polishing_controller"/>
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
+
+  <!-- launch rviz -->
+  <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_polishing)/launch/rviz/franka_polishing.rviz"/>
+
+  <!-- spacenav node launch file -->
+  <include file="$(find spacenav_node)/launch/classic.launch" />
+
+</launch>
