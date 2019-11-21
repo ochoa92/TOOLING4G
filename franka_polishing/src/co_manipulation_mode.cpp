@@ -26,7 +26,7 @@ namespace franka_polishing {
 CoManipulationMode::CoManipulationMode(){
   std::cout << "co_manipulation file opened!" << std::endl;
   std::string path;
-  path = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/co_manipulation";
+  path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/co_manipulation";
   file.open(path, std::ofstream::out);
   file << " t p_x p_y p_z Qx Qy Qz Qw Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O\n";
   file << " s m m m Qunit Qunit Qunit Qunit N N N N N N\n";
@@ -111,7 +111,6 @@ bool CoManipulationMode::init(hardware_interface::RobotHW* robot_hw, ros::NodeHa
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
-  points.scale.z = 0.01;
 
   // Set the color -- be sure to set alpha to something non-zero!
   points.color.a = 1.0;
@@ -174,7 +173,7 @@ void CoManipulationMode::update(const ros::Time& /*time*/, const ros::Duration& 
         last_time = time_lapse;
         flag_mode = PATTERN;
         std::string path;
-        path = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/pattern";
+        path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/pattern";
         pattern.open(path, std::ofstream::out);
         pattern << " t p_x p_y p_z Qx Qy Qz Qw\n";
         pattern << " s m m m Qunit Qunit Qunit Qunit\n";
@@ -228,7 +227,7 @@ void CoManipulationMode::update(const ros::Time& /*time*/, const ros::Duration& 
         flag_mode = P1;
         // plane file opened
         std::string path;
-        path = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/plane_points";
+        path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/plane_points";
         plane.open(path, std::ofstream::out);
       }
 

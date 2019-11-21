@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
   Eigen::MatrixXd orientation;  // matrix to save the robot orientations in Base-frame
   std::ifstream pattern_file;
   std::string pattern_path;
-  pattern_path = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/mold_data/pattern";
+  pattern_path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/mold_data/pattern";
   pattern_file.open(pattern_path);
 
   double time, px, py, pz, qx, qy, qz, qw, Fx_EE, Fy_EE, Fz_EE, Fx_O, Fy_O, Fz_O;
@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
   Eigen::MatrixXd Qmold;  // matrix to save the mold orientations in Base-frame
   std::ifstream mold_file;
   std::string mold_path;
-  mold_path = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/mold_data/mold_points";
+  mold_path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/mold_data/mold_points";
   mold_file.open(mold_path);
 
   double Pmold_x, Pmold_y, Pmold_z, Qmold_w, Qmold_x, Qmold_y, Qmold_z;
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
   std::string ws_path;
   double x, y, z;
   Eigen::MatrixXd P;
-  ws_path = "/home/helio/catkin_ws/src/TOOLING4G/franka_polishing/mold_data/mold_workspace";
+  ws_path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/mold_data/mold_workspace";
   ws_file.open(ws_path);
   int n_ws = 0;
   P.resize(n_ws + 1, 3);

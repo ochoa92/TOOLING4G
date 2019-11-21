@@ -16,21 +16,21 @@ namespace franka_polishing {
 TrainingMode::TrainingMode(){
   std::cout << "Open the files to write!" << std::endl;
   std::string path;
-  path = "/home/helio/kst/polishing/patterns/user_pattern";
+  path = "/home/panda/kst/polishing/patterns/user_pattern";
   file.open(path, std::ofstream::out);
   file << " t p_x p_y p_z Qx Qy Qz Qw Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O\n";
   file << " s m m m Qunit Qunit Qunit Qunit N N N N N N\n";
 
   // pattern
   std::string path_pattern;
-  path_pattern = "/home/helio/kst/polishing/patterns/polishing_pattern";
+  path_pattern = "/home/panda/kst/polishing/patterns/polishing_pattern";
   pattern.open(path_pattern, std::ofstream::out);
   pattern << " t p_x p_y p_z Qx Qy Qz Qw Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O\n";
   pattern << " s m m m Qunit Qunit Qunit Qunit N N N N N N\n";
 
   // plane
   std::string path_plane;
-  path_plane = "/home/helio/kst/polishing/planes/mould_points";
+  path_plane = "/home/panda/kst/polishing/planes/mould_points";
   plane.open(path_plane, std::ofstream::out);
 
 }
@@ -119,7 +119,6 @@ bool TrainingMode::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& 
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
-  points.scale.z = 0.01;
 
   // Set the color -- be sure to set alpha to something non-zero!
   points.color.a = 1.0;

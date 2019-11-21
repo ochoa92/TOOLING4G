@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   Eigen::MatrixXd orientation;  // matrix to save the robot orientations in Base-frame
   std::ifstream infile;
   std::string path;
-  path = "/home/helio/kst/polishing/patterns/polishing_pattern";
+  path = "/home/panda/kst/polishing/patterns/polishing_pattern";
   infile.open(path);
 
   double time, px, py, pz, qx, qy, qz, qw, Fx_EE, Fy_EE, Fz_EE, Fx_O, Fy_O, Fz_O;
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
   std::ifstream ws_file;
   double x, y, z;
   Eigen::MatrixXd P;
-  ws_file.open("/home/helio/kst/polishing/planes/mould_points");
+  ws_file.open("/home/padna/kst/polishing/planes/mould_points");
   int n_ws = 0;
   P.resize(n_ws + 1, 3);
   if(ws_file.is_open()){

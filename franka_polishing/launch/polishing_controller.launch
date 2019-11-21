@@ -1,12 +1,14 @@
 <?xml version="1.0" ?>
 <launch>
   <arg name="robot_ip" default="172.16.0.2"/>
-  <!-- <arg name="load_udrilling_tool" default="true" /> -->
+  <arg name="load_polishing_tool" default="true" />
   <include file="$(find franka_control)/launch/franka_control.launch" >
     <arg name="robot_ip" value="$(arg robot_ip)" />
   </include>
 
-  <!-- launch robot with udrilling_tool -->
+  <!-- launch robot with polishing_tool -->
+  <param if="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_polishing_tool.urdf.xacro'" />
+  <param unless="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" />
 
   <!-- launch cartesian_impedance_controller -->
   <rosparam command="load" file="$(find franka_polishing)/config/franka_polishing_controllers.yaml" />
