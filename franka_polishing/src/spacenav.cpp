@@ -17,8 +17,6 @@ Spacenav::Spacenav(ros::NodeHandle &nh): nh_(nh) {
 
   createPublishersAndSubscribers();
 
-  nh_.getParam("link_name", link_name);
-
   while(ros::ok() && !franka_state_flag) {
     ros::spinOnce();
     loop_rate.sleep();
@@ -219,7 +217,7 @@ void Spacenav::posePublisherCallback(geometry_msgs::PoseStamped& marker_pose, Ei
   marker_pose.pose.orientation.w = quaternion.w();
 
   // run pose publisher
-  marker_pose.header.frame_id = link_name;
+  marker_pose.header.frame_id = "/panda_link0";
   marker_pose.header.stamp = ros::Time::now();
   pose_pub.publish(marker_pose);
 
@@ -278,7 +276,7 @@ Eigen::Matrix3d Spacenav::points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& 
 }
 
 
-visualization_msgs::Marker Spacenav::pointsMarker(std::string points_ns, int points_id, Eigen::Vector3d points_scale, Eigen::Vector3d points_color){
+visualization_msgs::Marker Spacenav::pointsMarker(std::string points_ns, int points_id, Eigen::Vector2d points_scale, Eigen::Vector3d points_color){
 
   visualization_msgs::Marker points;
   points.header.frame_id = "/panda_link0";
@@ -292,8 +290,7 @@ visualization_msgs::Marker Spacenav::pointsMarker(std::string points_ns, int poi
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = points_scale(0);
   points.scale.y = points_scale(1);
-  points.scale.z = points_scale(2);
-
+  
   // Set the color -- be sure to set alpha to something non-zero!
   points.color.a = 1.0;
   points.color.r = points_color(0);

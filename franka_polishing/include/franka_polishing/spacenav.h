@@ -39,7 +39,6 @@ namespace franka_polishing {
       Eigen::Matrix4d T_spacenav;  //  Transformation matrix referred to spacenav
       Eigen::Matrix4d Tx, Ty, Tz;
 
-      std::string link_name;
 
       int spacenav_button_1 = 0;
       int spacenav_button_2 = 0;
@@ -54,7 +53,7 @@ namespace franka_polishing {
       Eigen::VectorXd robot_pose(Eigen::Matrix4d& Xd);  // Function to get the current robot pose
       Eigen::Matrix3d points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3);
       Eigen::MatrixXd moldWorkSpace(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3, Eigen::Vector3d& delta_synthetic, int& Nx, int& Ny);
-      visualization_msgs::Marker pointsMarker(std::string points_ns, int points_id, Eigen::Vector3d points_scale, Eigen::Vector3d points_color);
+      visualization_msgs::Marker pointsMarker(std::string points_ns, int points_id, Eigen::Vector2d points_scale, Eigen::Vector3d points_color);
       visualization_msgs::Marker lineStripsMarker(std::string lines_ns, int lines_id, double lines_scale, Eigen::Vector3d lines_color);
 
     private:

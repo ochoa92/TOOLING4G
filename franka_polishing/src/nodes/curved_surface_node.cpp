@@ -169,8 +169,8 @@ int main(int argc, char** argv) {
   visualization_msgs::Marker points_ws;
   std::string points_ns = "points_ws";
   int points_id = 0;
-  Eigen::Vector3d points_scale;
-  points_scale << 0.01, 0.01, 0.01;
+  Eigen::Vector2d points_scale;
+  points_scale << 0.01, 0.01;
   Eigen::Vector3d points_color;
   points_color << 1.0, 0.0, 0.0;
   points_ws = panda.pointsMarker(points_ns, points_id, points_scale, points_color);

@@ -43,7 +43,6 @@ int main(int argc, char** argv) {
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = 0.01;
   points.scale.y = 0.01;
-  points.scale.z = 0.01;
   // Set the color -- be sure to set alpha to something non-zero!
   points.color.a = 1.0;
   points.color.r = 1.0;
@@ -128,7 +127,7 @@ int main(int argc, char** argv) {
   std::string path_plane;
   double x, y, z;
   Eigen::MatrixXd P;
-  path_plane = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/plane_points";
+  path_plane = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/mold_workspace";
   file_plane.open(path_plane);
   int n_points = 0;
   P.resize(3, n_points + 1);

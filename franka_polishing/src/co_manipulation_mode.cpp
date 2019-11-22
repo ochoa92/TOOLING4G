@@ -227,7 +227,7 @@ void CoManipulationMode::update(const ros::Time& /*time*/, const ros::Duration& 
         flag_mode = P1;
         // plane file opened
         std::string path;
-        path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/plane_points";
+        path = "/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/mold_workspace";
         plane.open(path, std::ofstream::out);
       }
 
