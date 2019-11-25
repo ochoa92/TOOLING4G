@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
         return(0);
     }
     ws_file.close();
-    std::cout << P << std::endl;
+    // std::cout << P << std::endl;
 
     Eigen::Vector3d P1(P.row(0));
     Eigen::Vector3d P2(P.row(1));
@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
     points_ns = "mold_points";
     points_id = 2;
     points_scale << 0.01, 0.01;
-    points_color << 0.0, 1.0, 0.0;
+    points_color << 1.0, 0.0, 0.0;
     mold_points = panda.pointsMarker(points_ns, points_id, points_scale, points_color);
 
     geometry_msgs::Point p_m;  // mold points

@@ -12,8 +12,11 @@
 
   <!-- To see mould in rviz -->
   <group ns="polishing">
-    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/moulds/mould.xacro'" />
-    <!-- <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0.56 -0.02 0.041 0 0 0 1 panda_link0 mould 100"/> -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/molds/mold.xacro'" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0.56 -0.02 0.041 0 0 0 1 panda_link0 mold 100"/> -->
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/molds/polishing_mold.xacro'" />
+    <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0.4432 -0.4086 0.0877 -0.0002 0.0055 -0.0109 0.9999 panda_link0 polishing_mold 100"/>
     
   </group>
 
