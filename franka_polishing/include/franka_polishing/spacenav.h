@@ -55,6 +55,7 @@ namespace franka_polishing {
       Eigen::MatrixXd moldWorkSpace(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3, Eigen::Vector3d& delta_synthetic, int& Nx, int& Ny);
       visualization_msgs::Marker pointsMarker(std::string points_ns, int points_id, Eigen::Vector2d points_scale, Eigen::Vector3d points_color);
       visualization_msgs::Marker lineStripsMarker(std::string lines_ns, int lines_id, double lines_scale, Eigen::Vector3d lines_color);
+      int inpolygon(const Eigen::MatrixXd &vertices, double x, double y); // Function to verify if the point (x,y) is inside the polygon
 
     private:
       // VARIABLES

@@ -1,5 +1,5 @@
 // =============================================================================
-// Name        : universal_polishing_node.cpp
+// Name        : polishing_area_node.cpp
 // Author      : Hélio Ochoa
 // Description :
 // =============================================================================
@@ -15,7 +15,7 @@
 // MAIN
 int main(int argc, char** argv) {
 
-    ros::init(argc, argv, "universal_polishing_node");
+    ros::init(argc, argv, "polishing_area_node");
 
     ros::NodeHandle nh;
     franka_polishing::Spacenav panda(nh);
@@ -155,11 +155,34 @@ int main(int argc, char** argv) {
     Eigen::Vector3d P3(P.row(2));
     Eigen::Vector3d P4(P.row(3));
 
-    // distances between the 4 points that delimit the plane
-    Eigen::Vector3d l12(P2 - P1);
-    Eigen::Vector3d l23(P3 - P2);
-    Eigen::Vector3d l34(P4 - P3);
-    Eigen::Vector3d l41(P1 - P4);
+
+    // ---------------------------------------------------------------------------
+    // GET POLYGON VERTICES FROM A FILE
+    // ---------------------------------------------------------------------------
+    Eigen::MatrixXd vertices;  // matrix to save the polygon vertices
+    std::ifstream polygon_file;
+    polygon_file.open("/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/polygon_vertices");
+
+    // Vx Vy
+    double Vx, Vy;
+    getline(polygon_file, line);  // first line
+    int n_vertices = 0;
+    vertices.resize(2, n_vertices + 1);
+    if(polygon_file.is_open()){
+        while(polygon_file >> Vx >> Vy){
+            // save the values in the matrix
+            vertices.conservativeResize(2, n_vertices + 1);
+            vertices(0, n_vertices) = Vx;
+            vertices(1, n_vertices) = Vy;
+            n_vertices++;
+        }
+    }
+    else{
+        std::cout << "\nError open the file!" << std::endl;
+        return(0);
+    }
+    polygon_file.close();
+    // std::cout << polygon_vertices.transpose() << std::endl;
 
 
     // ---------------------------------------------------------------------------
@@ -295,22 +318,12 @@ int main(int argc, char** argv) {
     Eigen::Vector3d mould_offset;
     mould_offset.setZero();
 
-    Eigen::Vector3d l1P, l2P, l3P, l4P;
-    l1P.setZero();
-    l2P.setZero();
-    l3P.setZero();
-    l4P.setZero();
-
-    double signal1 = 0.0;
-    double signal2 = 0.0;
-    double signal3 = 0.0;
-    double signal4 = 0.0;
-
     int flag_pattern = 0;
     int flag_print = 0;
     int flag_interrupt = 0;
     int count = 0;
     int n_points = 0;
+    int inside = 0;
 
     ros::Rate loop_rate(1000);
     while (ros::ok()){
@@ -361,20 +374,11 @@ int main(int argc, char** argv) {
                     mould_offset << OFFSET(0, count), OFFSET(1, count), OFFSET(2, count);
                     new_position_d = new_position_d + Rmould * mould_offset;
 
-                    // vectors between the pattern points and the 4 points that delimit the plane
-                    l1P = (new_position_d - P1);
-                    l2P = (new_position_d - P2);
-                    l3P = (new_position_d - P3);
-                    l4P = (new_position_d - P4);
-
-                    // signal between the 2 vectors
-                    signal1 = l1P.dot(l12);
-                    signal2 = l2P.dot(l23);
-                    signal3 = l3P.dot(l34);
-                    signal4 = l4P.dot(l41);
-                    if( (signal1 >= 0.0) && (signal2 >= 0.0) && (signal3 >= 0.0) && (signal4 >= 0.0) ){
+                    inside = panda.inpolygon(vertices.transpose(), new_position_d(0), new_position_d(1));
+                    if(inside == 1){
                         position_d = new_position_d;
                     }
+
 
                 }// --------------------------------------------------------------------
                 else{
@@ -485,7 +489,7 @@ int main(int argc, char** argv) {
 
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
-        panda.posePublisherCallback(marker_pose, position_d, orientation_d);
+        // panda.posePublisherCallback(marker_pose, position_d, orientation_d);
 
 
         // -------------------------------------------------------------------------

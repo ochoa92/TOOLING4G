@@ -353,4 +353,43 @@ Eigen::MatrixXd Spacenav::moldWorkSpace(Eigen::Vector3d& P1, Eigen::Vector3d& P2
 }
 
 
+int Spacenav::inpolygon(const Eigen::MatrixXd &vertices, double x, double y){
+    
+  // If we never cross any lines we're inside.
+  int inside = 0;
+
+  // Loop through all the edges.
+  for(int i = 0; i < vertices.rows(); ++i){
+
+    // i is the index of the first vertex, j is the next one.
+    int j = (i + 1) % vertices.rows();
+
+    // The vertices of the edge we are checking.
+    double Vx0 = vertices(i, 0);
+    double Vy0 = vertices(i, 1);
+    double Vx1 = vertices(j, 0);
+    double Vy1 = vertices(j, 1);
+
+    // Check whether the edge intersects a line from (-inf,y) to (x,y).
+    
+    // First check if the line crosses the horizontal line at y in either direction.
+    if( ((Vy0 <= y) && (Vy1 > y)) || ((Vy1 <= y) && (Vy0 > y)) ){
+      // If so, get the point where it crosses that line. This is a simple solution
+      // to a linear equation. Note that we can't get a division by zero here -
+      // if Vy1 == Vy0 then the above if be false.
+      double cross = (Vx1 - Vx0) * (y - Vy0) / (Vy1 - Vy0) + Vx0;
+
+      // Finally check if it crosses to the left of our test point. You could equally
+      // do right and it should give the same result.
+      if(cross < x){
+        inside = !inside;
+      }
+    }
+
+  }
+
+  return inside;
+}
+
+
 } // namespace franka_polishing

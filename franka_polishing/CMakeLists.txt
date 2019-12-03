@@ -144,7 +144,8 @@ add_executable(user_pattern_node src/nodes/user_pattern_node.cpp)
 add_executable(flat_surface_node src/nodes/flat_surface_node.cpp)
 add_executable(nflat_surfaces_node src/nodes/nflat_surfaces_node.cpp)
 add_executable(curved_surface_node src/nodes/curved_surface_node.cpp)
-add_executable(universal_polishing_node src/nodes/universal_polishing_node.cpp)
+add_executable(polishing_area_node src/nodes/polishing_area_node.cpp)
+
 
 
 ## Specify libraries to link a library or executable target against
@@ -155,7 +156,7 @@ target_link_libraries(user_pattern_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml
 target_link_libraries(flat_surface_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 target_link_libraries(nflat_surfaces_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 target_link_libraries(curved_surface_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
-target_link_libraries(universal_polishing_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+target_link_libraries(polishing_area_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 
 
 #############
