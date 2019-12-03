@@ -165,6 +165,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); // NOLINT (readability-identifier-naming)
     Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame
     Eigen::Map<Eigen::Matrix<double, 6, 1>> O_force(robot_state.O_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_ext_hat_filtered.data()); // External torque, filtered. 
+    
 
     Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
     Eigen::Vector3d position(transform.translation());
@@ -266,8 +268,12 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // nullspace controll for posture optimization
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_dcgi.transpose()) * tau_o;
 
+    // Eigen::Matrix<double, 6, 1> F_measured( jacobian_dcgi.transpose() * tau_measured );
+    // std::cout << "\n" << F_measured(2) << std::endl;
+
     // Desired torque
-    tau_d << tau_task + tau_nullspace + coriolis;
+    // tau_d << tau_task + tau_nullspace + coriolis;
+    tau_d << tau_task + tau_nullspace + coriolis - tau_measured;
     // std::cout << "\n" << tau_d << std::endl;
 
     // Saturate torque rate to avoid discontinuities
