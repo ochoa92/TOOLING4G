@@ -489,7 +489,7 @@ int main(int argc, char** argv) {
 
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
-        // panda.posePublisherCallback(marker_pose, position_d, orientation_d);
+        panda.posePublisherCallback(marker_pose, position_d, orientation_d);
 
 
         // -------------------------------------------------------------------------
