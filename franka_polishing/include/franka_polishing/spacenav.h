@@ -39,6 +39,8 @@ namespace franka_polishing {
       Eigen::Matrix4d T_spacenav;  //  Transformation matrix referred to spacenav
       Eigen::Matrix4d Tx, Ty, Tz;
 
+      Eigen::Matrix<double, 6, 1> O_F_ext_hat_K;
+      Eigen::Matrix<double, 6, 1> K_F_ext_hat_K;
 
       int spacenav_button_1 = 0;
       int spacenav_button_2 = 0;

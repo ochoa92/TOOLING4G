@@ -5,7 +5,7 @@ namespace franka_polishing {
 // ----------------------------------------------------------------------------
 PolishingController::PolishingController(){
     // std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
-    // tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
+    // tracking_file.open("/home/panda/kst/polishing/polishing_controller", std::ofstream::out);
     // tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz\n";
     // tracking_file << "s m m m m m m rad rad rad rad rad rad N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad\n";
 }
@@ -107,6 +107,9 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     maxJointLimits << 2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973;
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
+
+    K_external_torque_.setZero();
+    K_external_torque_target_.setZero();
 
     count = 0;
 
@@ -268,6 +271,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // nullspace controll for posture optimization
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_dcgi.transpose()) * tau_o;
 
+    tau_measured << K_external_torque_ * tau_measured;
+    // std::cout << "\n" << tau_measured << std::endl;
     // Eigen::Matrix<double, 6, 1> F_measured( jacobian_dcgi.transpose() * tau_measured );
     // std::cout << "\n" << F_measured(2) << std::endl;
 
@@ -301,6 +306,9 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     nullspace_stiffness_ = filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
     // std::cout << "\n" << nullspace_stiffness_ << std::endl;
+
+    K_external_torque_ = filter_params_ * K_external_torque_target_ + (1.0 - filter_params_) * K_external_torque_;
+    // std::cout << "\n" << K_external_torque_ << std::endl;
 
     // update last integral error
     last_integral_error = integral_error; 
@@ -461,6 +469,14 @@ void PolishingController::complianceParamCallback(franka_polishing::compliance_p
 
     // nullspace stiffness target
     nullspace_stiffness_target_ = config.Kp_nullspace * nullspace_stiffness_target_.setIdentity();
+
+    // external torque activation/desactivation
+    if(config.external_torque == 0){    // OFF
+        K_external_torque_target_ << K_external_torque_target_.setZero();
+    }
+    else{   // ON
+        K_external_torque_target_ << K_external_torque_target_.setIdentity();
+    }
 
 }
 

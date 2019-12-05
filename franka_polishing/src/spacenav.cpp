@@ -41,6 +41,8 @@ void Spacenav::createPublishersAndSubscribers(){
 void Spacenav::frankaStateCallback(const franka_msgs::FrankaState::ConstPtr& msg){
 
   O_T_EE = Eigen::Matrix4d::Map(msg->O_T_EE.data());
+  O_F_ext_hat_K = Eigen::Matrix<double, 6, 1>::Map(msg->O_F_ext_hat_K.data());
+  K_F_ext_hat_K = Eigen::Matrix<double, 6, 1>::Map(msg->K_F_ext_hat_K.data());
   franka_state_flag = 1;
 }
 

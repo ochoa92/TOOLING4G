@@ -92,6 +92,9 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix3d Ip_d_target_, Io_d_target_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_target_;
+       
+        Eigen::Matrix<double, 7, 7> K_external_torque_;
+        Eigen::Matrix<double, 7, 7> K_external_torque_target_;
 
         // tracking file
         int count; // file counter
