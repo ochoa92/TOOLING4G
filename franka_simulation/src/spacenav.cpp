@@ -232,22 +232,22 @@ Eigen::Vector3d Spacenav::polynomial3_trajectory(Eigen::Vector3d& pi, Eigen::Vec
 Eigen::VectorXd Spacenav::robotPose(Eigen::Matrix4d& Xd){
 
     Eigen::Vector3d position;
-    Eigen::Quaterniond quaternion;
+    Eigen::Quaterniond orientation;
     Eigen::Affine3d aff;
     Eigen::VectorXd pose(7,1);
 
     aff.matrix() = Xd;
     position = aff.translation();
-    quaternion = aff.linear();
-    quaternion.normalize();
+    orientation = aff.linear();
+    orientation.normalize();
 
     pose << position[0],
             position[1],
             position[2],
-            quaternion.vec()[0],
-            quaternion.vec()[1],
-            quaternion.vec()[2],
-            quaternion.w();
+            orientation.vec()[0],
+            orientation.vec()[1],
+            orientation.vec()[2],
+            orientation.w();
 
     return pose;
 }
