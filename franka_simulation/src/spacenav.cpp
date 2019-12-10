@@ -40,7 +40,8 @@ void Spacenav::pandaStateCallback(const geometry_msgs::PoseStampedConstPtr& msg)
     
     Eigen::Quaterniond orientation;
     orientation.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;  
-    aff.linear() << orientation.coeffs();
+    Eigen::Matrix3d R(orientation.toRotationMatrix());
+    aff.linear() << R;
     
     O_T_EE = aff.matrix();
     
