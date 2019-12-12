@@ -470,7 +470,7 @@ void PolishingController::complianceParamCallback(franka_polishing::compliance_p
     // nullspace stiffness target
     nullspace_stiffness_target_ = config.Kp_nullspace * nullspace_stiffness_target_.setIdentity();
 
-    // external torque activation/desactivation
+    // external torque OFF/ON
     if(config.external_torque == 0){    // OFF
         K_external_torque_target_ << K_external_torque_target_.setZero();
     }

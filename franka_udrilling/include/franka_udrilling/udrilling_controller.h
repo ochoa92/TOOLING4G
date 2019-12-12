@@ -93,6 +93,9 @@ class uDrillingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_target_;
 
+        Eigen::Matrix<double, 7, 7> K_external_torque_;
+        Eigen::Matrix<double, 7, 7> K_external_torque_target_;
+
         // tracking file
         int count; // file counter
         std::ofstream tracking_file;

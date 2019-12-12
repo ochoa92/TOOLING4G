@@ -108,6 +108,9 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
 
+    K_external_torque_.setZero();
+    K_external_torque_target_.setZero();
+
     count = 0;
 
     // Create pose publishers
@@ -165,6 +168,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); // NOLINT (readability-identifier-naming)
     Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame
     Eigen::Map<Eigen::Matrix<double, 6, 1>> O_force(robot_state.O_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_ext_hat_filtered.data()); // External torque, filtered. 
 
     Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
     Eigen::Vector3d position(transform.translation());
@@ -266,8 +270,12 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     // nullspace controll for posture optimization
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_dcgi.transpose()) * tau_o;
 
+    tau_measured << K_external_torque_ * tau_measured;
+    // std::cout << "\n" << tau_measured << std::endl;
+
     // Desired torque
-    tau_d << tau_task + tau_nullspace + coriolis;
+    // tau_d << tau_task + tau_nullspace + coriolis;
+    tau_d << tau_task + tau_nullspace + coriolis - tau_measured;
     // std::cout << "\n" << tau_d << std::endl;
 
     // Saturate torque rate to avoid discontinuities
@@ -295,6 +303,10 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     nullspace_stiffness_ = filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
     // std::cout << "\n" << nullspace_stiffness_ << std::endl;
+
+    K_external_torque_ = filter_params_ * K_external_torque_target_ + (1.0 - filter_params_) * K_external_torque_;
+    // std::cout << "\n" << K_external_torque_ << std::endl;
+
 
     // update last integral error
     last_integral_error = integral_error; 
@@ -455,6 +467,14 @@ void uDrillingController::complianceParamCallback(franka_udrilling::compliance_p
 
     // nullspace stiffness target
     nullspace_stiffness_target_ = config.Kp_nullspace * nullspace_stiffness_target_.setIdentity();
+
+    // external torque OFF/ON
+    if(config.external_torque == 0){    // OFF
+        K_external_torque_target_ << K_external_torque_target_.setZero();
+    }
+    else{   // ON
+        K_external_torque_target_ << K_external_torque_target_.setIdentity();
+    }
 
 }
 
