@@ -21,6 +21,7 @@ Spacenav::Spacenav(ros::NodeHandle &nh): nh_(nh) {
 
     // Create publishers
     pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/panda_equilibrium_pose", 20);
+    mf_pub = nh_.advertise<trajectory_msgs::JointTrajectory>("/panda_hand_joint_trajectory_controller/command", 20);
 
     while(ros::ok() && !panda_state_flag) {
         ros::spinOnce();
@@ -79,6 +80,8 @@ void Spacenav::joyCallback(const sensor_msgs::Joy::ConstPtr &msg) {
     else if (flag_mode == 1)
         flag_mode = 2;
     else if (flag_mode == 2)
+        flag_mode = 3;
+    else if (flag_mode == 3)
         flag_mode = 0;
     }
 
@@ -102,6 +105,7 @@ void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
     Eigen::Affine3d last_aff_d;
     Eigen::Affine3d aff_spacenav;
 
+    Eigen::Vector2d fingers_position;
 
     for (int i = 0; i < 6; i++){
         if (spacenav_motion(i) != 0){
@@ -200,6 +204,20 @@ void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
 
             break;
 
+        case 3:
+            std::cout << CLEANWINDOW << "PANDA FINGERS MODE...\n\n";
+
+            if(spacenav_motion(1) > 0.0){
+                fingers_position << 0.0, 0.0;     
+                moveFingersCallback(fingers_position);   
+            }
+            else if(spacenav_motion(1) < 0.0){
+                fingers_position << 1.0, 1.0;
+                moveFingersCallback(fingers_position);   
+            }
+            
+            break;
+
     }
 
 }
@@ -251,6 +269,36 @@ Eigen::VectorXd Spacenav::robotPose(Eigen::Matrix4d& Xd){
             orientation.w();
 
     return pose;
+}
+
+
+void Spacenav::moveFingersCallback(Eigen::Vector2d& position){
+    
+    trajectory_msgs::JointTrajectory fingersCmd;
+
+    fingersCmd.header.stamp = ros::Time::now();
+    fingersCmd.header.frame_id = "/panda_link0";
+
+    fingersCmd.joint_names.resize(2);
+    fingersCmd.joint_names[0] = "panda_finger_joint1";
+    fingersCmd.joint_names[1] = "panda_finger_joint2";
+
+    fingersCmd.points.resize(1);
+    fingersCmd.points[0].positions.resize(2);
+    fingersCmd.points[0].velocities.resize(2);
+    fingersCmd.points[0].accelerations.resize(2);
+    fingersCmd.points[0].effort.resize(2);
+
+    fingersCmd.header.stamp = ros::Time::now() + ros::Duration(0.0);
+    fingersCmd.points[0].time_from_start = ros::Duration(0.5);
+    for(int i=0; i<2; i++){
+        fingersCmd.points[0].positions[i] = position(i);
+        fingersCmd.points[0].velocities[i] = 0;
+        fingersCmd.points[0].accelerations[i] = 0;
+        fingersCmd.points[0].effort[i] = 0;
+    }
+    mf_pub.publish(fingersCmd);
+
 }
 
 

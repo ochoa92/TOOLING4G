@@ -12,6 +12,7 @@
 #include <Eigen/Dense>
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <trajectory_msgs/JointTrajectory.h>
 #include <fstream>
 #include <SFML/Window/Keyboard.hpp>
 #include <math.h>
@@ -37,11 +38,11 @@ class Spacenav{
         Eigen::Matrix4d T_spacenav;  //  Transformation matrix referred to spacenav
         Eigen::Matrix4d Tx, Ty, Tz;
 
-
         int spacenav_button_1 = 0;
         int spacenav_button_2 = 0;
 
-        ros::Publisher pose_pub; // Franka Pose publisher
+        ros::Publisher pose_pub; // Panda Pose publisher
+        ros::Publisher mf_pub; // Panda move fingers publisher
 
 
         // FUNCS
@@ -49,6 +50,7 @@ class Spacenav{
         void posePublisherCallback(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
         Eigen::Vector3d polynomial3_trajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double ti, double tf, double t);
         Eigen::VectorXd robotPose(Eigen::Matrix4d& Xd);  // Function to get the current robot pose
+        void moveFingersCallback(Eigen::Vector2d& position); // Function to open/close panda fingers
 
     private:
         // VARIABLES
