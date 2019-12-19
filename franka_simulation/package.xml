@@ -90,6 +90,7 @@
   <exec_depend>spacenav_node</exec_depend>
 
   <depend>controller_interface</depend>
+  <depend>dynamic_reconfigure</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   urdf
   geometry_msgs
   spacenav_node
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -34,6 +35,15 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(gazebo REQUIRED)
+
+################################################
+## Declare ROS dynamic reconfigure parameters ##
+################################################
+
+## Generate dynamic reconfigure parameters in the 'cfg' folder
+generate_dynamic_reconfigure_options(
+  cfg/compliance_param.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -56,6 +66,7 @@ catkin_package(
    controller_manager_msgs
    controller_interface
    spacenav_node
+   dynamic_reconfigure
 
    DEPENDS
    gazebo

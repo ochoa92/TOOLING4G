@@ -24,6 +24,9 @@
 #include "ros/ros.h"
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <dynamic_reconfigure/server.h>
+
+#include <franka_simulation/compliance_paramConfig.h>
 
 #define PI  3.14159265358979323846  /* pi */
 #define CLEANWINDOW "\e[2J\e[H"
@@ -57,9 +60,12 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
         Eigen::Matrix<double, 7, 1> g;  // gravity
         Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
         Eigen::Matrix<double, 6, 6> cartesian_damping_;
-        Eigen::Matrix<double, 7, 7> nullspace_stiffness_;
         Eigen::Matrix3d Kp_d_, Dp_d_; // position stiffness and damping in desired frame
+        Eigen::Matrix3d Kp_d_target_, Dp_d_target_;
         Eigen::Matrix3d Ko_d_, Do_d_; // orientation stiffness and damping in desired frame
+        Eigen::Matrix3d Ko_d_target_, Do_d_target_;
+        Eigen::Matrix<double, 7, 7> nullspace_stiffness_;
+        Eigen::Matrix<double, 7, 7> nullspace_stiffness_target_;
         Eigen::Vector3d position_d_;
         Eigen::Vector3d position_d_target_;
         Eigen::Quaterniond orientation_d_;
@@ -67,8 +73,6 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
         Eigen::Matrix3d R_d_;
         Eigen::Matrix<double, 6, 1> velocity_d_;
         Eigen::Matrix<double, 6, 1> error, velocity_error;
-
-        double Kpx, Kpy, Kpz, Kox, Koy, Koz, Dpx, Dpy, Dpz, Dox, Doy, Doz, Kp_nullspace;
 
         // file with gains and file for tracking -----------------------------------
         int count; // file counter
@@ -87,6 +91,11 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
         // pose publisher
         ros::Publisher poseEE_pub;
         void posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
+
+        // Dynamic reconfigure
+        std::unique_ptr<dynamic_reconfigure::Server<franka_simulation::compliance_paramConfig>> dynamic_server_compliance_param_;
+        ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
+        void complianceParamCallback(franka_simulation::compliance_paramConfig& config, uint32_t level);
 
         // KDL variables -----------------------------------------------------------
         std::string root_name, end_effector_name;

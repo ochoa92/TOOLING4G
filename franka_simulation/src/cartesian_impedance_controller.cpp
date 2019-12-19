@@ -67,6 +67,10 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, r
 
     poseEE_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/panda_poseEE", 20);
 
+    dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("dynamic_reconfigure_compliance_param_node");
+    dynamic_server_compliance_param_ = std::make_unique< dynamic_reconfigure::Server<franka_simulation::compliance_paramConfig>>(dynamic_reconfigure_compliance_param_node_);
+    dynamic_server_compliance_param_->setCallback(boost::bind(&CartesianImpedanceController::complianceParamCallback, this, _1, _2));
+
     // ---------------------------------------------------------------------------
     // Init Values
     // ---------------------------------------------------------------------------
@@ -122,44 +126,6 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
     position_d_target_ = initial_transform.translation();
     orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
     orientation_d_target_.normalize();
-
-    // ---------------------------------------------------------------------------
-    // Get the controller gains from a file
-    // ---------------------------------------------------------------------------
-    std::string path_gains;
-    path_gains = "/home/panda/catkin_ws/src/TOOLING4G/franka_simulation/controller_gains/compliance_param";
-    file_gains.open(path_gains);
-    if(file_gains.is_open()){
-        file_gains >> Kpx >> Kpy >> Kpz >> Kox >> Koy >> Koz >> Dpx >> Dpy >> Dpz >> Dox >> Doy >> Doz >> Kp_nullspace;
-    }
-    else{
-        std::cout << "Error open the file!" << std::endl;
-    }
-    file_gains.close();
-
-
-    // position stiffness in desired frame
-    Kp_d_ << Kpx,   0,   0,
-                0, Kpy,   0,
-                0,   0, Kpz;
-
-    // orientation stiffness in desired frame
-    Ko_d_ << Kox,   0,   0,
-                0, Koy,   0,
-                0,   0, Koz;
-
-    // position damping in desired frame
-    Dp_d_ << Dpx,   0,   0,
-                0, Dpy,   0,
-                0,   0, Dpz;
-
-    // orientation damping in desired frame
-    Do_d_ << Dox,   0,   0,
-                0, Doy,   0,
-                0,   0, Doz;
-
-    // nullspace Gains
-    nullspace_stiffness_ = Kp_nullspace * nullspace_stiffness_.setIdentity();
 
 }
 
@@ -282,6 +248,14 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     orientation_d_.normalize();
     R_d_ = orientation_d_.toRotationMatrix();
 
+    // compliance parameter gains
+    Kp_d_ = filter_params_ * Kp_d_target_ + (1.0 - filter_params_) * Kp_d_;
+    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_; 
+    Dp_d_ = filter_params_ * Dp_d_target_ + (1.0 - filter_params_) * Dp_d_;
+    Do_d_ = filter_params_ * Do_d_target_ + (1.0 - filter_params_) * Do_d_;
+
+    nullspace_stiffness_ = filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
+
     posePublisherCallback(poseEE_pub, position, orientation);
  
     // ---------------------------------------------------------------------------
@@ -347,6 +321,34 @@ void CartesianImpedanceController::equilibriumPoseCallback(const geometry_msgs::
     if(last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0){
         orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
     }
+
+}
+
+
+void CartesianImpedanceController::complianceParamCallback(franka_simulation::compliance_paramConfig& config, uint32_t /*level*/){
+
+    // position stiffness in desired frame
+    Kp_d_target_ << config.Kpx,          0,          0,
+                             0, config.Kpy,          0,
+                             0,          0, config.Kpz;
+
+    // orientation stiffness in desired frame
+    Ko_d_target_ << config.Kox,          0,          0,
+                             0, config.Koy,          0,
+                             0,          0, config.Koz;
+
+    // position damping in desired frame
+    Dp_d_target_ << config.Dpx,          0,          0,
+                             0, config.Dpy,          0,
+                             0,          0, config.Dpz;
+
+    // orientation damping in desired frame
+    Do_d_target_ << config.Dox,          0,          0,
+                             0, config.Doy,          0,
+                             0,          0, config.Doz;
+
+    // nullspace stiffness target
+    nullspace_stiffness_target_ = config.Kp_nullspace * nullspace_stiffness_target_.setIdentity();
 
 }
 

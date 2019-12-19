@@ -27,10 +27,11 @@
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_impedance_controller
                                                                                                                 joint_state_controller
                                                                                                                 panda_hand_joint_trajectory_controller" />
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
 
   <!-- convert joint states to TF transforms for rviz, etc -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
-
+  
   <!-- launch rviz -->
   <!-- <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_simulation)/launch/rviz/panda_simulation_rviz.rviz"/> -->
 

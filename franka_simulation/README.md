@@ -1,4 +1,16 @@
-## franka_simulation
+## franka_simulation package
+# Launcher:
+roslaunch  package_name launch_file_name.launch
 
-#This package was built for ROS kinetic running under Ubuntu 16.04. Using the following command you can launch the Panda robot in Gazebo simulator:
-roslaunch franka_simulation panda_simulation.launch
+# To run a node:
+rosrun package_name node_name
+
+## Compile all packages:
+catkin_make
+
+# Compile a specific package
+catkin_make --pkg package_name
+
+# Example:
+roslaunch franka_simulation cartesian_impedance_controller.launch
+
