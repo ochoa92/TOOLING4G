@@ -22,7 +22,7 @@ Spacenav::Spacenav(ros::NodeHandle &nh): nh_(nh) {
     // Create publishers
     pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/panda_equilibrium_pose", 20);
     mf_pub = nh_.advertise<trajectory_msgs::JointTrajectory>("/panda_hand_joint_trajectory_controller/command", 20);
-
+    
     while(ros::ok() && !panda_state_flag) {
         ros::spinOnce();
         loop_rate.sleep();
@@ -292,7 +292,7 @@ void Spacenav::moveFingersCallback(Eigen::Vector2d& position){
     fingersCmd.header.stamp = ros::Time::now() + ros::Duration(0.0);
     fingersCmd.points[0].time_from_start = ros::Duration(0.5);
     for(int i=0; i<2; i++){
-        fingersCmd.points[0].positions[i] = position(i);
+        fingersCmd.points[0].positions[i] = position[i];
         fingersCmd.points[0].velocities[i] = 0;
         fingersCmd.points[0].accelerations[i] = 0;
         fingersCmd.points[0].effort[i] = 0;

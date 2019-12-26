@@ -13,6 +13,7 @@
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <std_msgs/Float64.h>
 #include <fstream>
 #include <SFML/Window/Keyboard.hpp>
 #include <math.h>
@@ -43,8 +44,7 @@ class Spacenav{
 
         ros::Publisher pose_pub; // Panda Pose publisher
         ros::Publisher mf_pub; // Panda move fingers publisher
-
-
+      
         // FUNCS
         void MotionControl(Eigen::Matrix4d& Xd); // Function to execute motion control
         void posePublisherCallback(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);

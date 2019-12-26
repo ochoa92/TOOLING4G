@@ -179,7 +179,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     Eigen::Matrix3d Do(R_d_ * Do_d_ * R_d_.transpose());  // cartesian orientation damping
     
     // Base frame
-    // Eigen::Matrix3d Kp(Kp_d_ );  // cartesian position stiffness
+    // Eigen::Matrix3d Kp(Kp_d_);  // cartesian position stiffness
     // Eigen::Matrix3d Dp(Dp_d_);  // cartesian position damping
     // Eigen::Matrix3d Ko(Ko_d_);  // cartesian orientation stiffness
     // Eigen::Matrix3d Do(Do_d_);  // cartesian orientation damping
@@ -218,7 +218,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     // compute the inertia matrix of the task space
     Eigen::Matrix<double, 6, 6> lambda( (J * M.inverse() * J.transpose()).inverse() );
 
-    // Cartesian PD control with damping ratio = 1
+    // Cartesian PD control 
     // tau_task << J.transpose() * lambda * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error );
     tau_task << J.transpose() * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error );
 
@@ -286,8 +286,8 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
 Eigen::Vector3d CartesianImpedanceController::R2r(Eigen::Matrix3d& Rotation){
     Eigen::Vector3d rotation_vector, aux;
     aux << Rotation(2,1) - Rotation(1,2),
-            Rotation(0,2) - Rotation(2,0),
-            Rotation(1,0) - Rotation(0,1);
+           Rotation(0,2) - Rotation(2,0),
+           Rotation(1,0) - Rotation(0,1);
     rotation_vector = 0.5 * aux;
 
     return rotation_vector;
