@@ -2,6 +2,7 @@
 
 namespace franka_simulation{
 
+// ####################################################################################
 Spacenav::Spacenav(ros::NodeHandle &nh): nh_(nh) {
     ros::Rate loop_rate(1000);
 
@@ -14,6 +15,8 @@ Spacenav::Spacenav(ros::NodeHandle &nh): nh_(nh) {
     Tx.setZero();
     Ty.setZero();
     Tz.setZero();
+
+    fingers_position.setZero();
 
     // Create subscribers
     spacenav_sub = nh_.subscribe("/spacenav/joy", 20, &Spacenav::joyCallback, this);
@@ -29,11 +32,12 @@ Spacenav::Spacenav(ros::NodeHandle &nh): nh_(nh) {
     }
 }
 
+// ####################################################################################
 Spacenav::~Spacenav() {
     pose_pub.shutdown();
 }
 
-
+// ####################################################################################
 void Spacenav::pandaStateCallback(const geometry_msgs::PoseStampedConstPtr& msg){
 
     Eigen::Affine3d aff;
@@ -49,7 +53,7 @@ void Spacenav::pandaStateCallback(const geometry_msgs::PoseStampedConstPtr& msg)
     panda_state_flag = 1;
 }
 
-
+// ####################################################################################
 void Spacenav::joyCallback(const sensor_msgs::Joy::ConstPtr &msg) {
 
     double threshold = 0.5, K = 0;
@@ -89,7 +93,7 @@ void Spacenav::joyCallback(const sensor_msgs::Joy::ConstPtr &msg) {
     spacenav_button_2 = msg->buttons[1];
 }
 
-
+// ####################################################################################
 void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
 
     Eigen::Matrix4d last_Xd;
@@ -105,7 +109,8 @@ void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
     Eigen::Affine3d last_aff_d;
     Eigen::Affine3d aff_spacenav;
 
-    Eigen::Vector2d fingers_position;
+    Eigen::Vector2d delta_fingers_position;
+    delta_fingers_position << 0.00001, 0.00001;
 
     for (int i = 0; i < 6; i++){
         if (spacenav_motion(i) != 0){
@@ -208,11 +213,17 @@ void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
             std::cout << CLEANWINDOW << "PANDA FINGERS MODE...\n\n";
 
             if(spacenav_motion(1) > 0.0){
-                fingers_position << 0.0, 0.0;     
+                fingers_position = fingers_position + delta_fingers_position;
+                if(fingers_position(0) >= 0.1){
+                    fingers_position << 0.1, 0.1;
+                }     
                 moveFingersCallback(fingers_position);   
             }
             else if(spacenav_motion(1) < 0.0){
-                fingers_position << 1.0, 1.0;
+                fingers_position = fingers_position - delta_fingers_position;
+                if(fingers_position(0) <= 0.0){
+                    fingers_position << 0.0, 0.0;
+                }
                 moveFingersCallback(fingers_position);   
             }
             
@@ -222,7 +233,7 @@ void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
 
 }
 
-
+// ####################################################################################
 void Spacenav::posePublisherCallback(Eigen::Vector3d& position, Eigen::Quaterniond& orientation){
 
     geometry_msgs::PoseStamped robot_pose;
@@ -241,13 +252,7 @@ void Spacenav::posePublisherCallback(Eigen::Vector3d& position, Eigen::Quaternio
 
 }
 
-
-Eigen::Vector3d Spacenav::polynomial3_trajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double ti, double tf, double t){
-    Eigen::Vector3d pd = pi + (3*(pf - pi)*pow((t - ti), 2))/pow((tf - ti), 2) - (2*(pf - pi)*pow((t - ti), 3))/pow((tf - ti), 3);
-    return pd;
-}
-
-
+// ####################################################################################
 Eigen::VectorXd Spacenav::robotPose(Eigen::Matrix4d& Xd){
 
     Eigen::Vector3d position;
@@ -271,9 +276,9 @@ Eigen::VectorXd Spacenav::robotPose(Eigen::Matrix4d& Xd){
     return pose;
 }
 
-
+// ####################################################################################
 void Spacenav::moveFingersCallback(Eigen::Vector2d& position){
-    
+
     trajectory_msgs::JointTrajectory fingersCmd;
 
     fingersCmd.header.stamp = ros::Time::now();
@@ -299,6 +304,70 @@ void Spacenav::moveFingersCallback(Eigen::Vector2d& position){
     }
     mf_pub.publish(fingersCmd);
 
+}
+
+// ####################################################################################
+Eigen::Vector3d Spacenav::polynomial3Trajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double ti, double tf, double t){  
+
+    Eigen::Vector3d pd = pi + (3*(pf - pi)*pow((t - ti), 2))/pow((tf - ti), 2) - (2*(pf - pi)*pow((t - ti), 3))/pow((tf - ti), 3);
+    return pd;
+}
+
+// ####################################################################################
+Eigen::Vector3d Spacenav::lineTrajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double t){
+
+    Eigen::Vector3d pd = pi * (1 - t) + pf * t;  
+    return pd;
+}
+
+// ####################################################################################
+Eigen::Vector3d Spacenav::ellipseTrajectory(Eigen::Vector3d& pi, double a, double b, double T, double t, std::string axis){
+
+    double Wr = (2*PI)/T; // Ressonance frequency 
+    Eigen::Vector3d pd;
+    if( axis.compare("XY") == 0){
+        pd[0] = pi[0] + a * cos(Wr * t) - a;
+        pd[1] = pi[1] + b * sin(Wr * t);
+        pd[2] = pi[2];
+    }
+    else if( axis.compare("XZ") == 0){
+        pd[0] = pi[0] + a * cos(Wr * t) - a;
+        pd[1] = pi[1];
+        pd[2] = pi[2] + b * sin(Wr * t);
+    }
+    else if( axis.compare("YZ") == 0){
+        pd[0] = pi[0];
+        pd[1] = pi[1] + a * cos(Wr * t) - a;
+        pd[2] = pi[2] + b * sin(Wr * t);
+    }
+
+    return pd;
+}
+
+// ####################################################################################
+Eigen::Matrix3d Spacenav::rotate(double angle, int axis){
+
+    Eigen::Matrix3d Rd;
+    // rotation in 'X'
+    if(axis == 0){
+        Rd << 1,          0,           0,
+              0, cos(angle), -sin(angle),
+              0, sin(angle),  cos(angle);
+    }
+    // rotation in 'Y'
+    else if(axis == 1){
+        Rd << cos(angle), 0, sin(angle),
+                       0, 1,          0,
+             -sin(angle), 0, cos(angle);
+    }
+    // rotation in 'Z'
+    else if(axis == 2){
+        Rd << cos(angle), -sin(angle), 0,
+              sin(angle),  cos(angle), 0,
+                       0,           0, 1;
+    }
+
+    return Rd;
 }
 
 
