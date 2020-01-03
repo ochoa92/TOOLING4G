@@ -1,0 +1,43 @@
+<launch>
+
+  <!-- GAZEBO arguments -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="load_polishing_tool" default="true"/>
+
+  <param if="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/polishing_simulation/panda_arm_polishing_tool.urdf.xacro'" />
+  <param unless="$(arg load_polishing_tool)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/polishing_simulation/panda_arm.urdf.xacro'" />
+
+  <!--launch GAZEBO with own world configuration -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda"/>
+
+  <!-- launch cartesian_impedance_controller -->
+  <rosparam command="load" file="$(find franka_simulation)/config/panda_controllers.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_impedance_controller
+                                                                                                                joint_state_controller" />
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+  
+  <!-- launch rviz -->
+  <!-- <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_simulation)/launch/rviz/panda_simulation_rviz.rviz"/> -->
+
+  <!-- Create node to command robot to a desired joint position-->
+  <!-- <node name="move_to_start" pkg="franka_simulation" type="move_to_start.py" respawn="false" output="screen"/> -->
+
+  <!-- spacenav node launch file -->
+  <include file="$(find spacenav_node)/launch/classic.launch" />
+
+</launch>

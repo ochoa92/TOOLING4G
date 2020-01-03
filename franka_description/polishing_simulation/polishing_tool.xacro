@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="polishing_tool">
+  <xacro:macro name="polishing_tool" params="connected_to:='' ns:='' rpy:='0 0 0' xyz:='0 0 0' ">
+    <xacro:unless value="${connected_to == ''}">
+      <joint name="${ns}_polishing_tool_joint" type="fixed">
+        <parent link="${connected_to}"/>
+        <child link="${ns}_polishing_tool"/>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+      </joint>
+    </xacro:unless>
+    <link name="${ns}_polishing_tool">
+      <visual>
+        <geometry>
+          <mesh filename="package://franka_description/meshes/visual/polishing_tool.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://franka_description/meshes/visual/polishing_tool.dae"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0.0460 -0.0460 0.1150" rpy="-0.7856 1.0472 0"/>
+        <mass value="0.610"/>
+        <inertia ixx="0.1" ixy="0.0" ixz="0.0" iyy="0.1" iyz="0.0" izz="0.1"/>
+      </inertial>
+    </link>  
+  </xacro:macro>
+</robot>

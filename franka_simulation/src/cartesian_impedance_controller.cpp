@@ -53,7 +53,8 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, r
 
     // Get root and end effector from parameter server
     root_name = "panda_link0";
-    end_effector_name = "panda_hand";
+    // end_effector_name = "panda_hand";
+    end_effector_name = "panda_polishing_tool";
 
     // Get chain from kdl tree
     if(!kdl_tree.getChain(root_name, end_effector_name, kdl_chain)){
