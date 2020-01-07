@@ -127,10 +127,12 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         // mold tf
         tf::TransformBroadcaster br_mold;
         tf::Transform tf_mold;
+        Eigen::Vector3d P1, P2, P3, P4;
 
         // publish a Frame
         void publishFrame(tf::TransformBroadcaster& br, tf::Transform& transform, Eigen::Vector3d& position, Eigen::Quaterniond& orientation, std::string base_link, std::string link_name);
-
+        
+        Eigen::Matrix3d points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3);
 };
 
 } //namespace franka_simulation

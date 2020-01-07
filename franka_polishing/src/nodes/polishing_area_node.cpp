@@ -511,7 +511,7 @@ int main(int argc, char** argv) {
         // -------------------------------------------------------------------------
 
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-        break;
+            break;
         ros::spinOnce();
         loop_rate.sleep();
     }
