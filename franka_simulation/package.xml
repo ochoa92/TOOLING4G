@@ -95,6 +95,7 @@
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <controller_interface plugin="${prefix}/panda_controllers_plugin.xml"/>
+    <gazebo_ros gazebo_model_path="${prefix}/models"/>
   </export>
 
 </package>

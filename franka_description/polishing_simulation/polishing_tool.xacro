@@ -20,10 +20,17 @@
         </geometry>
       </collision>
       <inertial>
-        <origin xyz="0.0460 -0.0460 0.1150" rpy="-0.7856 1.0472 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <mass value="0.610"/>
         <inertia ixx="0.1" ixy="0.0" ixz="0.0" iyy="0.1" iyz="0.0" izz="0.1"/>
       </inertial>
-    </link>  
+    </link>
+    <link name="${ns}_EE"/>
+    <joint name="${ns}_EE_joint" type="fixed">
+      <origin xyz="0.0460 -0.0460 0.1150" rpy="0 1.0472 -0.7854"/>
+      <parent link="${ns}_link8"/>
+      <child link="${ns}_EE"/>
+      <axis xyz="0 0 0"/>
+    </joint>
   </xacro:macro>
 </robot>

@@ -78,8 +78,9 @@ catkin_package(
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/panda_kdl.cpp
-  src/cartesian_impedance_controller.cpp;
-  src/spacenav.cpp;
+  src/cartesian_impedance_controller.cpp
+  src/spacenav.cpp
+  src/polishing_controller.cpp
 )
 
 ## Add cmake target dependencies of the library

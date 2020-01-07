@@ -1,47 +1,47 @@
-#include <franka_simulation/cartesian_impedance_controller.h>
+#include <franka_simulation/polishing_controller.h>
 
 namespace franka_simulation {
 
 
-CartesianImpedanceController::CartesianImpedanceController(){
+PolishingController::PolishingController(){
     std::cout << "Open the file to write!" << std::endl;
     std::string tracking_path;
-    tracking_path = "/home/panda/kst/simulation/cartesian_impedance_controller";
+    tracking_path = "/home/panda/kst/simulation/polishing_controller";
     file_tracking.open(tracking_path, std::ofstream::out);
     file_tracking << " t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz\n";
     file_tracking << " s m m m m m m rad rad rad rad rad rad m m m rad rad rad\n";
 }
 
-CartesianImpedanceController::~CartesianImpedanceController(){
+PolishingController::~PolishingController(){
     std::cout << "File closed!" << std::endl << std::endl;
     file_tracking.close();
 }
 
 
-bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle){
+bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle){
 
     std::string arm_id;
     if (!node_handle.getParam("arm_id", arm_id)) {
-        ROS_ERROR_STREAM("CartesianImpedanceController: Could not read parameter arm_id");
+        ROS_ERROR_STREAM("PolishingController: Could not read parameter arm_id");
         return false;
     }
 
     std::vector<std::string> joint_names;
     if (!node_handle.getParam("joint_names", joint_names) || joint_names.size() != 7) {
-        ROS_ERROR("CartesianImpedanceController: Invalid or no joint_names parameters provided, aborting controller init!");
+        ROS_ERROR("PolishingController: Invalid or no joint_names parameters provided, aborting controller init!");
         return false;
     }
 
     auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
     if (effort_joint_interface == nullptr) {
-        ROS_ERROR_STREAM("CartesianImpedanceController: Error getting effort joint interface from hardware");
+        ROS_ERROR_STREAM("PolishingController: Error getting effort joint interface from hardware");
         return false;
     }
     for (size_t i = 0; i < 7; ++i) {
         try {
             joint_handles_.push_back(effort_joint_interface->getHandle(joint_names[i]));
         } catch (const hardware_interface::HardwareInterfaceException& ex) {
-            ROS_ERROR_STREAM("CartesianImpedanceController: Exception getting joint handles: " << ex.what());
+            ROS_ERROR_STREAM("PolishingController: Exception getting joint handles: " << ex.what());
             return false;
         }
     }
@@ -50,7 +50,7 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, r
     if(!kdl_parser::treeFromParam("robot_description", kdl_tree)){
         ROS_ERROR("Failed to construct kdl tree!");
     }
-
+    
     // Get root and end effector from parameter server
     root_name = "panda_link0";
     end_effector_name = "panda_EE";
@@ -63,13 +63,13 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, r
     // Get number of joints
     n_joints = kdl_chain.getNrOfJoints();
 
-    sub_equilibrium_pose_ = node_handle.subscribe("/panda_equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this);
+    sub_equilibrium_pose_ = node_handle.subscribe("/panda_equilibrium_pose", 20, &PolishingController::equilibriumPoseCallback, this);
 
     poseEE_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/panda_poseEE", 20);
 
     dynamic_reconfigure_compliance_param_node_ = ros::NodeHandle("dynamic_reconfigure_compliance_param_node");
     dynamic_server_compliance_param_ = std::make_unique< dynamic_reconfigure::Server<franka_simulation::compliance_paramConfig>>(dynamic_reconfigure_compliance_param_node_);
-    dynamic_server_compliance_param_->setCallback(boost::bind(&CartesianImpedanceController::complianceParamCallback, this, _1, _2));
+    dynamic_server_compliance_param_->setCallback(boost::bind(&PolishingController::complianceParamCallback, this, _1, _2));
 
     // ---------------------------------------------------------------------------
     // Init Values
@@ -108,7 +108,7 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw, r
 }
 
 
-void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
+void PolishingController::starting(const ros::Time& /*time*/) {
 
     q_start << 0, 0, 0, -M_PI_2, 0, M_PI_2, M_PI_4;
     FK(forward_kinematics, q_start);
@@ -130,7 +130,7 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
 }
 
 
-void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
+void PolishingController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
 
     // ---------------------------------------------------------------------------
     // get state variables
@@ -259,6 +259,13 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     // publish panda_EE pose
     posePublisherCallback(poseEE_pub, position, orientation);
     
+    // publish mold frame
+    Eigen::Vector3d mold_position;
+    mold_position << 0.4432, -0.4086, 0.0877;
+    Eigen::Quaterniond mold_orientation;
+    mold_orientation.coeffs() << -0.0002, 0.0055, -0.0109, 0.9999;
+    publishFrame(br_mold, tf_mold, mold_position, mold_orientation, "/panda_link0", "/polishing_mold");
+
     // ---------------------------------------------------------------------------
     // Write to file
     // ---------------------------------------------------------------------------
@@ -284,7 +291,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
 }
 
 
-Eigen::Vector3d CartesianImpedanceController::R2r(Eigen::Matrix3d& Rotation){
+Eigen::Vector3d PolishingController::R2r(Eigen::Matrix3d& Rotation){
     Eigen::Vector3d rotation_vector, aux;
     aux << Rotation(2,1) - Rotation(1,2),
            Rotation(0,2) - Rotation(2,0),
@@ -295,13 +302,13 @@ Eigen::Vector3d CartesianImpedanceController::R2r(Eigen::Matrix3d& Rotation){
 }
 
 
-double CartesianImpedanceController::wrapToPI(double& angle){
+double PolishingController::wrapToPI(double& angle){
     double new_angle = atan2(sin(angle), cos(angle));
     return new_angle;
 }
 
 
-double CartesianImpedanceController::wrapTo2PI(double& angle){
+double PolishingController::wrapTo2PI(double& angle){
     double new_angle = asin(sin(angle));
     if(cos(angle) < 0){
         new_angle = M_PI-new_angle;
@@ -313,7 +320,7 @@ double CartesianImpedanceController::wrapTo2PI(double& angle){
 }
 
 
-void CartesianImpedanceController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
+void PolishingController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
     
     position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
     
@@ -326,7 +333,7 @@ void CartesianImpedanceController::equilibriumPoseCallback(const geometry_msgs::
 }
 
 
-void CartesianImpedanceController::complianceParamCallback(franka_simulation::compliance_paramConfig& config, uint32_t /*level*/){
+void PolishingController::complianceParamCallback(franka_simulation::compliance_paramConfig& config, uint32_t /*level*/){
 
     // position stiffness in desired frame
     Kp_d_target_ << config.Kpx,          0,          0,
@@ -354,7 +361,7 @@ void CartesianImpedanceController::complianceParamCallback(franka_simulation::co
 }
 
 
-void CartesianImpedanceController::posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation){
+void PolishingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation){
 
     geometry_msgs::PoseStamped robot_pose;
 
@@ -375,7 +382,7 @@ void CartesianImpedanceController::posePublisherCallback(ros::Publisher& pose_pu
 }
 
 
-bool CartesianImpedanceController::FK(KDL::Frame& kdl_frame, Eigen::Matrix<double, 7, 1>& q_values){
+bool PolishingController::FK(KDL::Frame& kdl_frame, Eigen::Matrix<double, 7, 1>& q_values){
     if (q_values.size() != n_joints){
         return false;
     }
@@ -396,7 +403,7 @@ bool CartesianImpedanceController::FK(KDL::Frame& kdl_frame, Eigen::Matrix<doubl
 }
 
 
-bool CartesianImpedanceController::jacobian(KDL::Jacobian &kdl_jacobian, Eigen::Matrix<double, 7, 1> q_values){
+bool PolishingController::jacobian(KDL::Jacobian &kdl_jacobian, Eigen::Matrix<double, 7, 1> q_values){
     if(q_values.size() != n_joints){
         return false;
     }
@@ -421,7 +428,7 @@ bool CartesianImpedanceController::jacobian(KDL::Jacobian &kdl_jacobian, Eigen::
 }
 
 
-bool CartesianImpedanceController::dynamic(KDL::JntSpaceInertiaMatrix& kdl_inertia, KDL::JntArray& kdl_coriolis, KDL::JntArray& kdl_gravity, Eigen::Matrix<double, 7, 1>& q_values, Eigen::Matrix<double, 7, 1>& dq_values, Vector& g_vector){
+bool PolishingController::dynamic(KDL::JntSpaceInertiaMatrix& kdl_inertia, KDL::JntArray& kdl_coriolis, KDL::JntArray& kdl_gravity, Eigen::Matrix<double, 7, 1>& q_values, Eigen::Matrix<double, 7, 1>& dq_values, Vector& g_vector){
     if(q_values.size() != n_joints || dq_values.size() != n_joints){
         return false;
     }
@@ -452,7 +459,7 @@ bool CartesianImpedanceController::dynamic(KDL::JntSpaceInertiaMatrix& kdl_inert
 }
 
 
-double CartesianImpedanceController::derivative_computation( const double q_i, const double maxJointLimit_i, const double minJointLimit_i){
+double PolishingController::derivative_computation( const double q_i, const double maxJointLimit_i, const double minJointLimit_i){
     double result;
     double average_joint;
     average_joint = ( maxJointLimit_i + minJointLimit_i) / 2.0;
@@ -463,14 +470,21 @@ double CartesianImpedanceController::derivative_computation( const double q_i, c
 
 
 template<int N> // number of joints or DOF
-void CartesianImpedanceController::gradient_mechanical_joint_limit( Eigen::Matrix<double, N, 1>& gradient_mechanical_joint_limit_out, const Eigen::Matrix<double, N, 1> q, const Eigen::Matrix<double, N, 1> maxJointLimits, const Eigen::Matrix<double, N, 1> minJointLimits ){
+void PolishingController::gradient_mechanical_joint_limit( Eigen::Matrix<double, N, 1>& gradient_mechanical_joint_limit_out, const Eigen::Matrix<double, N, 1> q, const Eigen::Matrix<double, N, 1> maxJointLimits, const Eigen::Matrix<double, N, 1> minJointLimits ){
     for ( int i = 0; i < q.rows(); i++ ){
         gradient_mechanical_joint_limit_out(i) = derivative_computation( q(i), maxJointLimits(i), minJointLimits(i) );
     }
 }
 
 
+void PolishingController::publishFrame(tf::TransformBroadcaster& br, tf::Transform& transform, Eigen::Vector3d& position, Eigen::Quaterniond& orientation, std::string base_link, std::string link_name){
+    transform.setOrigin( tf::Vector3(position(0), position(1), position(2)) );
+    transform.setRotation( tf::Quaternion(orientation.vec()[0], orientation.vec()[1], orientation.vec()[2], orientation.w()) );
+    br.sendTransform( tf::StampedTransform(transform, ros::Time::now(), base_link, link_name) );
+}
+
+
 } // namespace franka_simulation
 
-PLUGINLIB_EXPORT_CLASS(franka_simulation::CartesianImpedanceController,
+PLUGINLIB_EXPORT_CLASS(franka_simulation::PolishingController,
                        controller_interface::ControllerBase)

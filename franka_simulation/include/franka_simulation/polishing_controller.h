@@ -1,8 +1,9 @@
 // =============================================================================
-// Name        : cartesian_impedance_controller.h
+// Name        : polishing_controller.h
 // Author      : Hélio Ochoa
-// Description : Cartesian impedance controller where the orientation control
-//               is based on rotation error (just for Gazebo)
+// Description : A controller for polishing tasks based on a cartesian impedance
+//               controller with posture optimization. Compliance parameters and
+//               the equilibrium pose can be modified online. (just for Gazebo)
 // =============================================================================
 #include <sstream>
 #include <fstream>
@@ -36,12 +37,12 @@ using namespace KDL;
 
 namespace franka_simulation{
 
-class CartesianImpedanceController : public controller_interface::MultiInterfaceController<
+class PolishingController : public controller_interface::MultiInterfaceController<
                                             hardware_interface::EffortJointInterface>{
 
     public:
-        CartesianImpedanceController();
-        ~CartesianImpedanceController();
+        PolishingController();
+        ~PolishingController();
 
         bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle) override;
         void starting(const ros::Time&) override;
@@ -122,6 +123,13 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
         double derivative_computation( const double q_i, const double maxJointLimit_i, const double minJointLimit_i);
         template<int N> // number of joints or DOF
         void gradient_mechanical_joint_limit( Eigen::Matrix<double, N, 1>& gradient_mechanical_joint_limit_out, const Eigen::Matrix<double, N, 1> q, const Eigen::Matrix<double, N, 1> maxJointLimits, const Eigen::Matrix<double, N, 1> minJointLimits );
+
+        // mold tf
+        tf::TransformBroadcaster br_mold;
+        tf::Transform tf_mold;
+
+        // publish a Frame
+        void publishFrame(tf::TransformBroadcaster& br, tf::Transform& transform, Eigen::Vector3d& position, Eigen::Quaterniond& orientation, std::string base_link, std::string link_name);
 
 };
 
