@@ -293,7 +293,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Matrix3d Rmold(points2Rotation(P1, P2, P4));
     Eigen::Vector3d mold_position(P1);
     Eigen::Quaterniond mold_orientation(Rmold);
-    publishFrame(br_mold, tf_mold, mold_position, mold_orientation, "/panda_link0", "/polishing_mold");
+    publishFrame(br_mold, tf_mold, mold_position, mold_orientation, "/world", "/polishing_mold");
 
     // ---------------------------------------------------------------------------
     // Write to file

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot>
+  
+  <!-- polishing_mold link -->
+  <gazebo reference="polishing_mold">
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <kp>10000000.0</kp>
+    <kd>1.0</kd>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+</robot>
