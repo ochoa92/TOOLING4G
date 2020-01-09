@@ -17,6 +17,8 @@
 #include <fstream>
 #include <SFML/Window/Keyboard.hpp>
 #include <math.h>
+#include <visualization_msgs/Marker.h>
+#include <tf/transform_broadcaster.h>
 
 
 #define PI  3.14159265358979323846  /* pi */
@@ -24,7 +26,7 @@
 
 namespace franka_simulation {
 
-class Spacenav{
+class Spacenav{   
     public:
         Spacenav(ros::NodeHandle &nh);
         ~Spacenav();
@@ -52,6 +54,10 @@ class Spacenav{
         void posePublisherCallback(Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
         Eigen::VectorXd robotPose(Eigen::Matrix4d& Xd);  // Function to get the current robot pose
         void moveFingersCallback(Eigen::Vector2d& position); // Function to open/close panda fingers
+        visualization_msgs::Marker pointsMarker(std::string points_ns, int points_id, Eigen::Vector2d points_scale, Eigen::Vector3d points_color);
+        visualization_msgs::Marker lineStripsMarker(std::string lines_ns, int lines_id, double lines_scale, Eigen::Vector3d lines_color);
+        int inpolygon(const Eigen::MatrixXd &vertices, double x, double y); // Function to verify if the point (x,y) is inside the polygon
+        Eigen::Matrix3d points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3);
 
         /**
          * 

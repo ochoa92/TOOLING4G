@@ -307,6 +307,93 @@ void Spacenav::moveFingersCallback(Eigen::Vector2d& position){
 }
 
 // ####################################################################################
+visualization_msgs::Marker Spacenav::pointsMarker(std::string points_ns, int points_id, Eigen::Vector2d points_scale, Eigen::Vector3d points_color){
+
+    visualization_msgs::Marker points;
+    points.header.frame_id = "/panda_link0";
+    points.header.stamp = ros::Time::now();
+    points.ns = points_ns;
+    points.id = points_id;
+    points.action = visualization_msgs::Marker::ADD;
+    points.type = visualization_msgs::Marker::POINTS;
+    points.pose.orientation.w = 1.0;
+
+    // POINTS markers use x and y scale for width/height respectively
+    points.scale.x = points_scale(0);
+    points.scale.y = points_scale(1);
+
+    // Set the color -- be sure to set alpha to something non-zero!
+    points.color.a = 1.0;
+    points.color.r = points_color(0);
+    points.color.g = points_color(1);
+    points.color.b = points_color(2);
+
+    return points;
+}
+
+// ####################################################################################
+visualization_msgs::Marker Spacenav::lineStripsMarker(std::string lines_ns, int lines_id, double lines_scale, Eigen::Vector3d lines_color){
+    visualization_msgs::Marker line_strips;
+    line_strips.header.frame_id = "/panda_link0";
+    line_strips.header.stamp = ros::Time::now();
+    line_strips.ns = lines_ns;
+    line_strips.id = lines_id;
+    line_strips.action = visualization_msgs::Marker::ADD;
+    line_strips.type = visualization_msgs::Marker::LINE_STRIP;
+    line_strips.pose.orientation.w = 1.0;
+
+    // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
+    line_strips.scale.x = lines_scale;
+
+    // Set the color -- be sure to set alpha to something non-zero!
+    line_strips.color.a = 1.0;
+    line_strips.color.r = lines_color(0);
+    line_strips.color.g = lines_color(1);
+    line_strips.color.b = lines_color(2);
+
+    return line_strips;
+}
+
+// ####################################################################################
+int Spacenav::inpolygon(const Eigen::MatrixXd &vertices, double x, double y){
+
+    // If we never cross any lines we're inside.
+    int inside = 0;
+
+    // Loop through all the edges.
+    for(int i = 0; i < vertices.rows(); ++i){
+
+        // i is the index of the first vertex, j is the next one.
+        int j = (i + 1) % vertices.rows();
+
+        // The vertices of the edge we are checking.
+        double Vx0 = vertices(i, 0);
+        double Vy0 = vertices(i, 1);
+        double Vx1 = vertices(j, 0);
+        double Vy1 = vertices(j, 1);
+
+        // Check whether the edge intersects a line from (-inf,y) to (x,y).
+
+        // First check if the line crosses the horizontal line at y in either direction.
+        if( ((Vy0 <= y) && (Vy1 > y)) || ((Vy1 <= y) && (Vy0 > y)) ){
+            // If so, get the point where it crosses that line. This is a simple solution
+            // to a linear equation. Note that we can't get a division by zero here -
+            // if Vy1 == Vy0 then the above if be false.
+            double cross = (Vx1 - Vx0) * (y - Vy0) / (Vy1 - Vy0) + Vx0;
+
+            // Finally check if it crosses to the left of our test point. You could equally
+            // do right and it should give the same result.
+            if(cross < x){
+                inside = !inside;
+            }
+        }
+
+    }
+
+    return inside;
+}
+
+// ####################################################################################
 Eigen::Vector3d Spacenav::polynomial3Trajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double ti, double tf, double t){  
 
     Eigen::Vector3d pd = pi + (3*(pf - pi)*pow((t - ti), 2))/pow((tf - ti), 2) - (2*(pf - pi)*pow((t - ti), 3))/pow((tf - ti), 3);

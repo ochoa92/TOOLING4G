@@ -112,6 +112,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 add_executable(test_panda_kdl src/nodes/test_panda_kdl.cpp)
 add_executable(simulation_spacenav_node src/nodes/simulation_spacenav_node.cpp)
 add_executable(simulation_test_node src/nodes/simulation_test_node.cpp)
+add_executable(simulation_polishing_node src/nodes/simulation_polishing_node.cpp)
 
 
 ## Specify libraries to link a library or executable target against
@@ -119,6 +120,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 target_link_libraries(test_panda_kdl ${catkin_LIBRARIES} ${PROJECT_NAME})
 target_link_libraries(simulation_spacenav_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 target_link_libraries(simulation_test_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
+target_link_libraries(simulation_polishing_node ${catkin_LIBRARIES} ${PROJECT_NAME} sfml-system sfml-window sfml-graphics sfml-audio sfml-network)
 
 
 ## -----------------------------------------------------------------------------

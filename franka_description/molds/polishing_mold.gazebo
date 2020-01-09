@@ -1,10 +1,17 @@
 <?xml version="1.0"?>
 <robot>
   
+  <!-- Gazebo plugin for ROS Control -->
+  <!-- <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/polishing_mold</robotNamespace>
+    </plugin>
+  </gazebo> -->
+
   <!-- polishing_mold link -->
   <gazebo reference="polishing_mold">
-    <mu1>0.2</mu1>
-    <mu2>0.2</mu2>
+    <mu1>100</mu1>
+    <mu2>100</mu2>
     <kp>10000000.0</kp>
     <kd>1.0</kd>
     <material>Gazebo/Grey</material>

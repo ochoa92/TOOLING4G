@@ -95,7 +95,7 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
 
     Ko_d_.setZero();
     Do_d_.setZero();
-    
+
     Ip_d_.setZero();
     Io_d_.setZero();
 
@@ -128,7 +128,7 @@ void PolishingController::starting(const ros::Time& /*time*/){
 
     // compute initial velocity with jacobian and set x_attractor to initial configuration
     franka::RobotState initial_state = state_handle_->getRobotState();
-    
+
     // get jacobian
     std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
 
@@ -168,14 +168,14 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); // NOLINT (readability-identifier-naming)
     Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame
     Eigen::Map<Eigen::Matrix<double, 6, 1>> O_force(robot_state.O_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame
-    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_ext_hat_filtered.data()); // External torque, filtered. 
-    
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_ext_hat_filtered.data()); // External torque, filtered.
+
 
     Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
     Eigen::Vector3d position(transform.translation());
     Eigen::Quaterniond orientation(transform.linear());
     Eigen::Matrix3d R(transform.rotation());
-    
+
 
     // ---------------------------------------------------------------------------
     // Set the impedance controller gains
@@ -202,7 +202,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     cartesian_integral_.topLeftCorner(3, 3) << Ip;
     cartesian_integral_.bottomRightCorner(3, 3) << Io;
     // std::cout << "\n" << cartesian_integral_ << std::endl;
-   
+
     // ---------------------------------------------------------------------------
     // compute error to desired pose
     // ---------------------------------------------------------------------------
@@ -298,7 +298,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // compliance parameter gains
     Kp_d_ = filter_params_ * Kp_d_target_ + (1.0 - filter_params_) * Kp_d_;
-    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_; 
+    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_;
     Dp_d_ = filter_params_ * Dp_d_target_ + (1.0 - filter_params_) * Dp_d_;
     Do_d_ = filter_params_ * Do_d_target_ + (1.0 - filter_params_) * Do_d_;
     Ip_d_ = filter_params_ * Ip_d_target_ + (1.0 - filter_params_) * Ip_d_;
@@ -311,7 +311,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // std::cout << "\n" << K_external_torque_ << std::endl;
 
     // update last integral error
-    last_integral_error = integral_error; 
+    last_integral_error = integral_error;
 
     // update pose publishers
     posePublisherCallback(poseEE_pub, position, orientation);
@@ -338,9 +338,9 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     //               << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
     //               << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
     //               << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
-    //               << EE_force[0] << " " 
-    //               << EE_force[1] << " " 
-    //               << EE_force[2] << " " 
+    //               << EE_force[0] << " "
+    //               << EE_force[1] << " "
+    //               << EE_force[2] << " "
     //               << O_force[0] << " "
     //               << O_force[1] << " "
     //               << O_force[2] << " "
@@ -360,7 +360,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     //               << integral_error[4] << " "
     //               << integral_error[5] << "\n";
 
-    // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;           
+    // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;
 
 }
 
@@ -376,7 +376,7 @@ Eigen::Matrix<double, 7, 1> PolishingController::saturateTorqueRate(const Eigen:
 }
 
 // ----------------------------------------------------------------------------
-Eigen::Vector3d PolishingController::R2r(Eigen::Matrix3d& Rotation){ 
+Eigen::Vector3d PolishingController::R2r(Eigen::Matrix3d& Rotation){
     Eigen::Vector3d aux, rotation_vector;
     aux << Rotation(2,1) - Rotation(1,2),
            Rotation(0,2) - Rotation(2,0),
@@ -386,13 +386,13 @@ Eigen::Vector3d PolishingController::R2r(Eigen::Matrix3d& Rotation){
 }
 
 // ----------------------------------------------------------------------------
-double PolishingController::wrapToPI(double& angle){ 
+double PolishingController::wrapToPI(double& angle){
     double new_angle = atan2(sin(angle), cos(angle));
     return new_angle;
 }
 
 // ----------------------------------------------------------------------------
-double PolishingController::wrapTo2PI(double& angle){ 
+double PolishingController::wrapTo2PI(double& angle){
     double new_angle = asin(sin(angle));
     if(cos(angle) < 0){
         new_angle = M_PI-new_angle;
@@ -423,9 +423,9 @@ void PolishingController::gradient_mechanical_joint_limit( Eigen::Matrix<double,
 
 // ----------------------------------------------------------------------------
 void PolishingController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
-    
+
     position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    
+
     Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
     orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;
     if(last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0){
@@ -503,7 +503,7 @@ void PolishingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen:
 
 
 void PolishingController::errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error){
-    
+
     geometry_msgs::Twist robot_error;
 
     robot_error.linear.x = error[0];

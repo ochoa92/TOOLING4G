@@ -62,10 +62,13 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 7, 1> g;  // gravity
         Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
         Eigen::Matrix<double, 6, 6> cartesian_damping_;
+        Eigen::Matrix<double, 6, 6> cartesian_integral_;
         Eigen::Matrix3d Kp_d_, Dp_d_; // position stiffness and damping in desired frame
         Eigen::Matrix3d Kp_d_target_, Dp_d_target_;
         Eigen::Matrix3d Ko_d_, Do_d_; // orientation stiffness and damping in desired frame
         Eigen::Matrix3d Ko_d_target_, Do_d_target_;
+        Eigen::Matrix3d Ip_d_, Io_d_; // position and orientation integral in desired frame
+        Eigen::Matrix3d Ip_d_target_, Io_d_target_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_target_;
         Eigen::Vector3d position_d_;
@@ -75,6 +78,8 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix3d R_d_;
         Eigen::Matrix<double, 6, 1> velocity_d_;
         Eigen::Matrix<double, 6, 1> error, velocity_error;
+        Eigen::Matrix<double, 6, 1> integral_error;
+        Eigen::Matrix<double, 6, 1> last_integral_error;
 
         // file with gains and file for tracking -----------------------------------
         int count; // file counter

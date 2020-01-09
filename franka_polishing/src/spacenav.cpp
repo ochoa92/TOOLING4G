@@ -292,7 +292,7 @@ visualization_msgs::Marker Spacenav::pointsMarker(std::string points_ns, int poi
   // POINTS markers use x and y scale for width/height respectively
   points.scale.x = points_scale(0);
   points.scale.y = points_scale(1);
-  
+
   // Set the color -- be sure to set alpha to something non-zero!
   points.color.a = 1.0;
   points.color.r = points_color(0);
@@ -356,7 +356,7 @@ Eigen::MatrixXd Spacenav::moldWorkSpace(Eigen::Vector3d& P1, Eigen::Vector3d& P2
 
 
 int Spacenav::inpolygon(const Eigen::MatrixXd &vertices, double x, double y){
-    
+
   // If we never cross any lines we're inside.
   int inside = 0;
 
@@ -373,7 +373,7 @@ int Spacenav::inpolygon(const Eigen::MatrixXd &vertices, double x, double y){
     double Vy1 = vertices(j, 1);
 
     // Check whether the edge intersects a line from (-inf,y) to (x,y).
-    
+
     // First check if the line crosses the horizontal line at y in either direction.
     if( ((Vy0 <= y) && (Vy1 > y)) || ((Vy1 <= y) && (Vy0 > y)) ){
       // If so, get the point where it crosses that line. This is a simple solution

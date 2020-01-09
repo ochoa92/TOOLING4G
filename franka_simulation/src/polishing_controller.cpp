@@ -8,8 +8,8 @@ PolishingController::PolishingController(){
     std::string tracking_path;
     tracking_path = "/home/panda/kst/simulation/polishing_controller";
     file_tracking.open(tracking_path, std::ofstream::out);
-    file_tracking << " t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz\n";
-    file_tracking << " s m m m m m m rad rad rad rad rad rad m m m rad rad rad\n";
+    file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz i_px i_py i_pz i_ox i_oy i_oz\n";
+    file_tracking << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m rad rad rad\n";
 }
 
 PolishingController::~PolishingController(){
@@ -97,6 +97,9 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
 
     Ko_d_.setZero();
     Do_d_.setZero();
+
+    Ip_d_.setZero();
+    Io_d_.setZero();
 
     maxJointLimits << 2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973;
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
@@ -207,13 +210,9 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Matrix3d Dp(R_d_ * Dp_d_ * R_d_.transpose());  // cartesian position damping
     Eigen::Matrix3d Ko(R_d_ * Ko_d_ * R_d_.transpose());  // cartesian orientation stiffness
     Eigen::Matrix3d Do(R_d_ * Do_d_ * R_d_.transpose());  // cartesian orientation damping
+    Eigen::Matrix3d Ip(R_d_ * Ip_d_ * R_d_.transpose());  // cartesian position integrative
+    Eigen::Matrix3d Io(R_d_ * Io_d_ * R_d_.transpose());  // cartesian position integrative
     
-    // Base frame
-    // Eigen::Matrix3d Kp(Kp_d_);  // cartesian position stiffness
-    // Eigen::Matrix3d Dp(Dp_d_);  // cartesian position damping
-    // Eigen::Matrix3d Ko(Ko_d_);  // cartesian orientation stiffness
-    // Eigen::Matrix3d Do(Do_d_);  // cartesian orientation damping
-
     cartesian_stiffness_.setIdentity();
     cartesian_stiffness_.topLeftCorner(3, 3) << Kp;
     cartesian_stiffness_.bottomRightCorner(3, 3) << Ko;
@@ -223,6 +222,11 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     cartesian_damping_.topLeftCorner(3, 3) << Dp;
     cartesian_damping_.bottomRightCorner(3, 3) << Do;
     //std::cout << "\n" << cartesian_damping_ << std::endl;
+
+    cartesian_integral_.setIdentity();
+    cartesian_integral_.topLeftCorner(3, 3) << Ip;
+    cartesian_integral_.bottomRightCorner(3, 3) << Io;
+    // std::cout << "\n" << cartesian_integral_ << std::endl;
 
 
     // ---------------------------------------------------------------------------
@@ -239,6 +243,36 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Matrix<double, 6, 1> velocity(J * dq);
     velocity_error << velocity_d_ - velocity;
 
+    // integral position error
+    integral_error.head(3) = last_integral_error.head(3) + error.head(3);
+    // establish limits (saturarion zone)
+    for(int i = 0; i<3; i++){
+        if(integral_error.head(3)[i] > 150.0){
+            integral_error.head(3)[i] = 150.0;
+        }
+        else if(integral_error.head(3)[i] < -150.0){
+            integral_error.head(3)[i] = -150.0;
+        }
+    }
+
+    // integral orientation error
+    double small_number = 0.000001;
+    if( (error.tail(3).transpose() * error.tail(3)) < small_number ){
+        integral_error.tail(3) = error.tail(3);
+    }
+    else{
+        integral_error.tail(3) = ( (last_integral_error.tail(3).transpose() * error.tail(3)/error.tail(3).norm()).value() * error.tail(3)/error.tail(3).norm() ) + error.tail(3);
+    }
+    // establish limits (saturarion zone)
+    for(int i = 0; i<3; i++){
+        if(integral_error.tail(3)[i] > 100.0){
+            integral_error.tail(3)[i] = 100.0;
+        }
+        else if(integral_error.tail(3)[i] < -100.0){
+            integral_error.tail(3)[i] = -100.0;
+        }
+    }
+
     // ---------------------------------------------------------------------------
     // compute control
     // ---------------------------------------------------------------------------
@@ -250,7 +284,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // Cartesian PD control 
     // tau_task << J.transpose() * lambda * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error );
-    tau_task << J.transpose() * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error );
+    tau_task << J.transpose() * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error + cartesian_integral_ * integral_error );
 
     // Dynamically consistent generalized inverse of the jacobian
     Eigen::Matrix<double, 7, 6> J_dcgi = M.inverse() * J.transpose() * lambda;
@@ -283,6 +317,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_; 
     Dp_d_ = filter_params_ * Dp_d_target_ + (1.0 - filter_params_) * Dp_d_;
     Do_d_ = filter_params_ * Do_d_target_ + (1.0 - filter_params_) * Do_d_;
+    Ip_d_ = filter_params_ * Ip_d_target_ + (1.0 - filter_params_) * Ip_d_;
+    Io_d_ = filter_params_ * Io_d_target_ + (1.0 - filter_params_) * Io_d_;
 
     nullspace_stiffness_ = filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
 
@@ -295,6 +331,9 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Quaterniond mold_orientation(Rmold);
     publishFrame(br_mold, tf_mold, mold_position, mold_orientation, "/world", "/polishing_mold");
 
+    // update last integral error
+    last_integral_error = integral_error;
+
     // ---------------------------------------------------------------------------
     // Write to file
     // ---------------------------------------------------------------------------
@@ -303,19 +342,17 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     
     count++;
     double TIME = count/1000.0;
-    file_tracking << " " << TIME << " "
-                    << position[0] << " " << position_d_[0] << " "
-                    << position[1] << " " << position_d_[1] << " "
-                    << position[2] << " " << position_d_[2] << " "
-                    << wrapToPI(euler_angles[0]) << " " << wrapToPI(euler_angles_d_[0]) << " "
-                    << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
-                    << wrapTo2PI(euler_angles[2]) << " " << wrapTo2PI(euler_angles_d_[2]) << " "
-                    << error[0] << " "
-                    << error[1] << " "
-                    << error[2] << " "
-                    << error[3] << " "
-                    << error[4] << " "
-                    << error[5] << "\n";
+    file_tracking << TIME << " "
+                  << position[0] << " " << position_d_[0] << " "
+                  << position[1] << " " << position_d_[1] << " "
+                  << position[2] << " " << position_d_[2] << " "
+                  << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
+                  << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
+                  << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
+                  << error[0] << " " << error[1] << " " << error[2] << " "
+                  << error[3] << " " << error[4] << " " << error[5] << " "
+                  << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
+                  << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << "\n";
 
 }
 
@@ -383,6 +420,16 @@ void PolishingController::complianceParamCallback(franka_simulation::compliance_
     Do_d_target_ << config.Dox,          0,          0,
                              0, config.Doy,          0,
                              0,          0, config.Doz;
+
+    // position integral in desired frame
+    Ip_d_target_ << config.Ipx,          0,          0,
+                             0, config.Ipy,          0,
+                             0,          0, config.Ipz;
+
+    // orientation integral in desired frame
+    Io_d_target_ << config.Iox,          0,          0,
+                             0, config.Ioy,          0,
+                             0,          0, config.Ioz;
 
     // nullspace stiffness target
     nullspace_stiffness_target_ = config.Kp_nullspace * nullspace_stiffness_target_.setIdentity();

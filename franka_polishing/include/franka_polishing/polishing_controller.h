@@ -1,8 +1,8 @@
 // =============================================================================
 // Name        : polishing_controller.h
 // Author      : Hélio Ochoa
-// Description : A controller for polishing tasks based on a cartesian 
-//               impedance controller with posture optimization. Compliance 
+// Description : A controller for polishing tasks based on a cartesian
+//               impedance controller with posture optimization. Compliance
 //               parameters and the equilibrium pose can be modified online.
 // =============================================================================
 
@@ -56,16 +56,16 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         void update(const ros::Time&, const ros::Duration& period) override;
 
     private:
-        // saturation 
+        // saturation
         Eigen::Matrix<double, 7, 1> saturateTorqueRate(const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
                                                        const Eigen::Matrix<double, 7, 1>& tau_J_d);  // NOLINT (readability-identifier-naming)
 
-        // handles 
+        // handles
          std::unique_ptr<franka_hw::FrankaStateHandle> state_handle_;
         std::unique_ptr<franka_hw::FrankaModelHandle> model_handle_;
-        std::vector<hardware_interface::JointHandle> joint_handles_;  
+        std::vector<hardware_interface::JointHandle> joint_handles_;
 
-        // controller variables 
+        // controller variables
         double filter_params_{0.01};
         const double delta_tau_max_{1.0};
         Eigen::Vector3d position_d_;
@@ -80,7 +80,7 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 6, 1> last_integral_error;
         Eigen::Matrix<double, 7, 1> maxJointLimits;
         Eigen::Matrix<double, 7, 1> minJointLimits;
-        Eigen::Matrix<double, 7, 1> gradient; // gradient mechanical joint limit   
+        Eigen::Matrix<double, 7, 1> gradient; // gradient mechanical joint limit
         Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
         Eigen::Matrix<double, 6, 6> cartesian_damping_;
         Eigen::Matrix<double, 6, 6> cartesian_integral_;
@@ -92,7 +92,7 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix3d Ip_d_target_, Io_d_target_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_target_;
-       
+
         Eigen::Matrix<double, 7, 7> K_external_torque_;
         Eigen::Matrix<double, 7, 7> K_external_torque_target_;
 
@@ -100,12 +100,12 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         int count; // file counter
         std::ofstream tracking_file;
 
-        // important funcs 
+        // important funcs
         Eigen::Vector3d R2r(Eigen::Matrix3d& Rotation); // Convert a rotation Matrix in rotation vector
         double wrapToPI(double& angle); // Wrap between [-PI, PI]
         double wrapTo2PI(double& angle); // Wrap between [0, 2*PI]
 
-        // Equilibrium pose subscriber 
+        // Equilibrium pose subscriber
         ros::Subscriber sub_equilibrium_pose_;
         void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 
@@ -114,13 +114,13 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
         void complianceParamCallback(franka_polishing::compliance_paramConfig& config, uint32_t level);
 
-        // posture optimization funcs 
+        // posture optimization funcs
         double derivative_computation(const double q_i, const double maxJointLimit_i, const double minJointLimit_i);
         template<int N> // number of joints or DOF
-        void gradient_mechanical_joint_limit(Eigen::Matrix<double, N, 1>& gradient_mechanical_joint_limit_out, 
-                                             const Eigen::Matrix<double, N, 1> q, 
-                                             const Eigen::Matrix<double, N, 1> maxJointLimits, 
-                                             const Eigen::Matrix<double, N, 1> minJointLimits );                                                                               
+        void gradient_mechanical_joint_limit(Eigen::Matrix<double, N, 1>& gradient_mechanical_joint_limit_out,
+                                             const Eigen::Matrix<double, N, 1> q,
+                                             const Eigen::Matrix<double, N, 1> maxJointLimits,
+                                             const Eigen::Matrix<double, N, 1> minJointLimits );
 
         // pose publisher
         ros::Publisher poseEE_pub;
