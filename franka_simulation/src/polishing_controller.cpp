@@ -8,8 +8,8 @@ PolishingController::PolishingController(){
     std::string tracking_path;
     tracking_path = "/home/panda/kst/simulation/polishing_controller";
     file_tracking.open(tracking_path, std::ofstream::out);
-    file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz i_px i_py i_pz i_ox i_oy i_oz Fx Fy Fz\n";
-    file_tracking << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m rad rad rad N N N\n";
+    file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz i_px i_py i_pz i_ox i_oy i_oz Fx Fy Fz Fx_filtered Fy_filtered Fz_filtered\n";
+    file_tracking << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m rad rad rad N N N N N N\n";
 }
 
 PolishingController::~PolishingController(){
@@ -322,7 +322,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     }
     // filtering the EEforce
     for (int i = 0; i < 6; ++i) {
-        EEforce_filtered(i) = lowpassFilter(0.001, EEforce[i], EEforce_last[i], 10.0);
+        EEforce_filtered(i) = lowpassFilter(0.001, EEforce[i], EEforce_last[i], 100.0);
     }
 
     // ---------------------------------------------------------------------------
@@ -354,6 +354,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // update last integral error
     last_integral_error = integral_error;
+    
+    // update last EEforce
     EEforce_last = EEforce;
  
 
@@ -376,6 +378,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
                   << error[3] << " " << error[4] << " " << error[5] << " "
                   << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
                   << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
+                  << EEforce[0] << " " << EEforce[1] << " " << EEforce[2] << " "
                   << EEforce_filtered[0] << " " << EEforce_filtered[1] << " " << EEforce_filtered[2] << "\n";
 
 }
