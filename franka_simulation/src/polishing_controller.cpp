@@ -8,8 +8,8 @@ PolishingController::PolishingController(){
     std::string tracking_path;
     tracking_path = "/home/panda/kst/simulation/polishing_controller";
     file_tracking.open(tracking_path, std::ofstream::out);
-    file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz i_px i_py i_pz i_ox i_oy i_oz\n";
-    file_tracking << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m rad rad rad\n";
+    file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz i_px i_py i_pz i_ox i_oy i_oz Fx Fy Fz\n";
+    file_tracking << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m rad rad rad N N N\n";
 }
 
 PolishingController::~PolishingController(){
@@ -92,6 +92,9 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     error.setZero();
     velocity_error.setZero();
 
+    integral_error.setZero();
+    last_integral_error.setZero();
+
     Kp_d_.setZero();
     Dp_d_.setZero();
 
@@ -104,6 +107,9 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     maxJointLimits << 2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973;
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
+
+    EEforce_filtered.setZero();
+    EEforce_last.setZero();
 
     count = 0;
 
@@ -304,6 +310,21 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
         joint_handles_[i].setCommand(tau_d(i));
     }
 
+
+    // ---------------------------------------------------------------------------
+    // Compute the EE external wrench (force, torque) acting on EE frame
+    // ---------------------------------------------------------------------------
+    Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, tau_d);
+    Eigen::MatrixXd JT_pinv = pseudoInverse(J.transpose(), true); // kinematic pseuoinverse   
+    Eigen::Matrix<double, 6, 1> EEforce = JT_pinv * tau_ext;
+    if(count < 2000){
+        EEforce.setZero();
+    }
+    // filtering the EEforce
+    for (int i = 0; i < 6; ++i) {
+        EEforce_filtered(i) = lowpassFilter(0.001, EEforce[i], EEforce_last[i], 10.0);
+    }
+
     // ---------------------------------------------------------------------------
     // update parameters
     // ---------------------------------------------------------------------------
@@ -333,6 +354,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // update last integral error
     last_integral_error = integral_error;
+    EEforce_last = EEforce;
+ 
 
     // ---------------------------------------------------------------------------
     // Write to file
@@ -352,7 +375,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
                   << error[0] << " " << error[1] << " " << error[2] << " "
                   << error[3] << " " << error[4] << " " << error[5] << " "
                   << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
-                  << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << "\n";
+                  << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
+                  << EEforce_filtered[0] << " " << EEforce_filtered[1] << " " << EEforce_filtered[2] << "\n";
 
 }
 
@@ -582,7 +606,35 @@ Eigen::Matrix3d PolishingController::points2Rotation(Eigen::Vector3d& P1, Eigen:
 }
 
 
+Eigen::Matrix<double, 7, 1> PolishingController::externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::VectorXd& command_torque){
+    Eigen::Matrix<double, 7, 1> tau_ext = effort - command_torque;
+    return tau_ext;
+}
+
+
+Eigen::MatrixXd PolishingController::pseudoInverse(const Eigen::MatrixXd& M_, bool damped){
+    double lambda_ = damped ? 0.2 : 0.0;
+
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(M_, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType sing_vals_ = svd.singularValues();
+    Eigen::MatrixXd S_ = M_;  // copying the dimensions of M_, its content is not needed.
+    S_.setZero();
+
+    for (int i = 0; i < sing_vals_.size(); i++)
+        S_(i, i) = (sing_vals_(i)) / (sing_vals_(i) * sing_vals_(i) + lambda_ * lambda_);
+
+    Eigen::MatrixXd M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
+
+    return M_pinv_;
+}
+
+
+double PolishingController::lowpassFilter(double sample_time, double y, double y_last, double cutoff_frequency) {  
+    double gain = sample_time / (sample_time + (1.0 / (2.0 * M_PI * cutoff_frequency)));   
+    return gain * y + (1 - gain) * y_last;
+}
+
+
 } // namespace franka_simulation
 
-PLUGINLIB_EXPORT_CLASS(franka_simulation::PolishingController,
-                       controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(franka_simulation::PolishingController, controller_interface::ControllerBase)

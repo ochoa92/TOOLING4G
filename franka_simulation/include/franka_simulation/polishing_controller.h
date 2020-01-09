@@ -10,6 +10,9 @@
 #include <cmath>
 
 #include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/LU>
+#include <Eigen/SVD>
 
 #include <controller_interface/multi_interface_controller.h>
 #include <controller_interface/controller_base.h>
@@ -81,6 +84,9 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 6, 1> integral_error;
         Eigen::Matrix<double, 6, 1> last_integral_error;
 
+        Eigen::Matrix<double, 6, 1> EEforce_last;
+        Eigen::Matrix<double, 6, 1> EEforce_filtered;
+
         // file with gains and file for tracking -----------------------------------
         int count; // file counter
         std::ofstream file_tracking;
@@ -137,7 +143,24 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         // publish a Frame
         void publishFrame(tf::TransformBroadcaster& br, tf::Transform& transform, Eigen::Vector3d& position, Eigen::Quaterniond& orientation, std::string base_link, std::string link_name);
         
+        // computes a 3D rotation matrix from three 3D points
         Eigen::Matrix3d points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3);
+
+        // computes the external torque
+        Eigen::Matrix<double, 7, 1> externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::VectorXd& command_torque);
+        Eigen::MatrixXd pseudoInverse(const Eigen::MatrixXd& M_, bool damped);
+
+        /**
+         * Applies a first-order low-pass filter
+         *
+         * @param[in] sample_time Sample time constant
+         * @param[in] y Current value of the signal to be filtered
+         * @param[in] y_last Value of the signal to be filtered in the previous time step
+         * @param[in] cutoff_frequency Cutoff frequency of the low-pass filter
+         *
+         * @return Filtered value.
+         */
+        double lowpassFilter(double sample_time, double y, double y_last, double cutoff_frequency);
 };
 
 } //namespace franka_simulation
