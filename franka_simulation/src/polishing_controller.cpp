@@ -322,8 +322,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     if(count < 2000){
         EE_force.setZero();
     }
-    // filtering the EE_wrench
-    for (int i = 0; i < 6; ++i) {
+    // filtering the EE_force
+    for (int i = 0; i < 3; ++i) {
         EE_force_filtered(i) = lowpassFilter(0.001, EE_force[i], EE_force_last[i], 100.0);
     }
 
