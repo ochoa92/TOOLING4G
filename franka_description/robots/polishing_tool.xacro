@@ -16,7 +16,7 @@
       </visual>
       <collision>
         <geometry>
-          <mesh filename="package://franka_description/meshes/visual/polishing_tool.dae"/>
+          <mesh filename="package://franka_description/meshes/collision/polishing_tool.stl"/>
         </geometry>
       </collision>
     </link>

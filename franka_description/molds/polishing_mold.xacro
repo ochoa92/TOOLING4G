@@ -16,15 +16,15 @@
   <!-- polishing_mold Link -->
   <link name="polishing_mold">
     <visual>
-      <origin xyz="0.0 0.0 0.0" rpy="${-pi/2} 0.0 0.0"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <geometry>
         <mesh filename="package://franka_description/meshes/visual/polishing_mold.dae"/>
       </geometry>
     </visual>
     <collision>
-      <origin xyz="0.0 0.0 0.0" rpy="${-pi/2} 0.0 0.0"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <geometry>
-        <mesh filename="package://franka_description/meshes/visual/polishing_mold.dae"/>
+        <mesh filename="package://franka_description/meshes/collision/polishing_mold.stl"/>
       </geometry>
     </collision>
     <inertial>

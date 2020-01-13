@@ -3,5 +3,5 @@
   <xacro:include filename="$(find franka_description)/robots/panda_arm.xacro"/>
   <xacro:include filename="$(find franka_description)/robots/polishing_tool.xacro"/>
   <xacro:panda_arm />
-  <xacro:polishing_tool ns="panda" rpy="${-pi} 0 ${-pi/4 + pi}" connected_to="panda_link8"/>
+  <xacro:polishing_tool ns="panda" rpy="0 0 ${-pi/4}" connected_to="panda_link8"/>
 </robot>
