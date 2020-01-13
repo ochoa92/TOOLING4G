@@ -108,9 +108,10 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
 
-    EEforce_filtered.setZero();
-    EEforce_last.setZero();
-
+    EE_force.setZero();
+    EE_force_last.setZero();
+    EE_force_filtered.setZero();
+    
     count = 0;
 
     return true;
@@ -312,17 +313,18 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
 
     // ---------------------------------------------------------------------------
-    // Compute the EE external wrench (force, torque) acting on EE frame
+    // Compute the EE external wrench (force,torque) acting on EE frame
     // ---------------------------------------------------------------------------
     Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, tau_d);
     Eigen::MatrixXd JT_pinv = pseudoInverse(J.transpose(), true); // kinematic pseuoinverse   
-    Eigen::Matrix<double, 6, 1> EEforce = JT_pinv * tau_ext;
+    Eigen::Matrix<double, 6, 1> EE_wrench = (JT_pinv * tau_ext); // end-effector wrench (force,torque)
+    EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];  
     if(count < 2000){
-        EEforce.setZero();
+        EE_force.setZero();
     }
-    // filtering the EEforce
+    // filtering the EE_wrench
     for (int i = 0; i < 6; ++i) {
-        EEforce_filtered(i) = lowpassFilter(0.001, EEforce[i], EEforce_last[i], 100.0);
+        EE_force_filtered(i) = lowpassFilter(0.001, EE_force[i], EE_force_last[i], 100.0);
     }
 
     // ---------------------------------------------------------------------------
@@ -350,13 +352,13 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Matrix3d Rmold(points2Rotation(P1, P2, P4));
     Eigen::Vector3d mold_position(P1);
     Eigen::Quaterniond mold_orientation(Rmold);
-    publishFrame(br_mold, tf_mold, mold_position, mold_orientation, "/world", "/polishing_mold");
+    publishFrame(br_mold, tf_mold, mold_position, mold_orientation, "/panda_link0", "/polishing_mold");
 
     // update last integral error
     last_integral_error = integral_error;
     
     // update last EEforce
-    EEforce_last = EEforce;
+    EE_force_last = EE_force;
  
 
     // ---------------------------------------------------------------------------
@@ -378,8 +380,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
                   << error[3] << " " << error[4] << " " << error[5] << " "
                   << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
                   << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
-                  << EEforce[0] << " " << EEforce[1] << " " << EEforce[2] << " "
-                  << EEforce_filtered[0] << " " << EEforce_filtered[1] << " " << EEforce_filtered[2] << "\n";
+                  << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << " "
+                  << EE_force_filtered[0] << " " << EE_force_filtered[1] << " " << EE_force_filtered[2] << "\n";
 
 }
 

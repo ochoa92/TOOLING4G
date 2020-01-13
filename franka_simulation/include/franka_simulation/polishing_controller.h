@@ -84,8 +84,9 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 6, 1> integral_error;
         Eigen::Matrix<double, 6, 1> last_integral_error;
 
-        Eigen::Matrix<double, 6, 1> EEforce_last;
-        Eigen::Matrix<double, 6, 1> EEforce_filtered;
+        Eigen::Vector3d EE_force;
+        Eigen::Vector3d EE_force_last;
+        Eigen::Vector3d EE_force_filtered;
 
         // file with gains and file for tracking -----------------------------------
         int count; // file counter
@@ -161,6 +162,7 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
          * @return Filtered value.
          */
         double lowpassFilter(double sample_time, double y, double y_last, double cutoff_frequency);
+
 };
 
 } //namespace franka_simulation

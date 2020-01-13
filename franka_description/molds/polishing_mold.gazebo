@@ -10,8 +10,8 @@
 
   <!-- polishing_mold link -->
   <gazebo reference="polishing_mold">
-    <mu1>100</mu1>
-    <mu2>100</mu2>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
     <kp>10000000.0</kp>
     <kd>1.0</kd>
     <material>Gazebo/Grey</material>
