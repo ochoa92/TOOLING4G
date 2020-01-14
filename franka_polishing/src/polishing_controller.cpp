@@ -148,6 +148,36 @@ void PolishingController::starting(const ros::Time& /*time*/){
     orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
     orientation_d_target_.normalize();
 
+    // ---------------------------------------------------------------------------
+    // Get mold pose from a file
+    // ---------------------------------------------------------------------------
+    std::ifstream ws_file;
+    double x, y, z;
+    Eigen::MatrixXd P;
+    ws_file.open("/home/panda/catkin_ws/src/TOOLING4G/franka_polishing/co_manipulation_data/mold_workspace");
+    int n_ws = 0;
+    P.resize(n_ws + 1, 3);
+    if(ws_file.is_open()){
+        while(ws_file >> x >> y >> z){
+            // save the values in the matrix
+            P.conservativeResize(n_ws + 1, 3);
+            P(n_ws, 0) = x;
+            P(n_ws, 1) = y;
+            P(n_ws, 2) = z;
+            n_ws++;
+        }
+    }
+    else{
+        std::cout << "Error open the file!" << std::endl;
+    }
+    ws_file.close();
+    // std::cout << P << std::endl;
+
+    P1 = P.row(0);
+    P2 = P.row(1);
+    P3 = P.row(2);
+    P4 = P.row(3);
+
 }
 
 // ----------------------------------------------------------------------------
@@ -320,6 +350,12 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // update error publisher
     errorPublisherCallback(error_pub, error);
 
+    // publish mold frame
+    Eigen::Matrix3d Rmold(points2Rotation(P1, P2, P4));
+    Eigen::Vector3d mold_position(P1);
+    Eigen::Quaterniond mold_orientation(Rmold);
+    publishFrame(br_mold, tf_mold, mold_position, mold_orientation, "/panda_link0", "/polishing_mold");
+
     // ---------------------------------------------------------------------------
     // Write to file
     // ---------------------------------------------------------------------------
@@ -480,7 +516,7 @@ void PolishingController::complianceParamCallback(franka_polishing::compliance_p
 
 }
 
-
+// ----------------------------------------------------------------------------
 void PolishingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation){
 
     geometry_msgs::PoseStamped robot_pose;
@@ -501,7 +537,7 @@ void PolishingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen:
 
 }
 
-
+// ----------------------------------------------------------------------------
 void PolishingController::errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error){
 
     geometry_msgs::Twist robot_error;
@@ -517,6 +553,35 @@ void PolishingController::errorPublisherCallback(ros::Publisher& error_pub, Eige
     // run error publisher
     error_pub.publish(robot_error);
 
+}
+
+// ----------------------------------------------------------------------------
+void PolishingController::publishFrame(tf::TransformBroadcaster& br, tf::Transform& transform, Eigen::Vector3d& position, Eigen::Quaterniond& orientation, std::string base_link, std::string link_name){
+    transform.setOrigin( tf::Vector3(position(0), position(1), position(2)) );
+    transform.setRotation( tf::Quaternion(orientation.vec()[0], orientation.vec()[1], orientation.vec()[2], orientation.w()) );
+    br.sendTransform( tf::StampedTransform(transform, ros::Time::now(), base_link, link_name) );
+}
+
+// ----------------------------------------------------------------------------
+Eigen::Matrix3d PolishingController::points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3){
+
+    // compute the vectors of the desired rotation matrix
+    Eigen::Vector3d nx( (P3-P1)/((P3-P1).norm()) );
+    Eigen::Vector3d ny( (P2-P1)/((P2-P1).norm()) );
+    Eigen::Vector3d nz( nx.cross(ny) );
+    nz = nz/(nz.norm());
+
+    // complete the rotation matrix (orthogonality characteristic)
+    ny = nz.cross(nx);
+    ny = ny/(ny.norm());
+
+    // construct the rotation matrix R = [nx', ny', nz']
+    Eigen::Matrix3d R;
+    R << nx(0), ny(0), nz(0),
+         nx(1), ny(1), nz(1),
+         nx(2), ny(2), nz(2);
+
+    return R;
 }
 
 

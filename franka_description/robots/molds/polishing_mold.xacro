@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="polishing_mold">
+
+  <!-- polishing_mold Link -->
+  <link name="polishing_mold">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/visual/polishing_mold.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/collision/polishing_mold.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+</robot>

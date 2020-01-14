@@ -50,7 +50,7 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     if(!kdl_parser::treeFromParam("robot_description", kdl_tree)){
         ROS_ERROR("Failed to construct kdl tree!");
     }
-    
+
     // Get root and end effector from parameter server
     root_name = "panda_link0";
     end_effector_name = "panda_EE";
@@ -108,10 +108,11 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
 
+    effort_initial.setZero();
     EE_force.setZero();
     EE_force_last.setZero();
     EE_force_filtered.setZero();
-    
+
     count = 0;
 
     return true;
@@ -136,7 +137,7 @@ void PolishingController::starting(const ros::Time& /*time*/) {
     position_d_target_ = initial_transform.translation();
     orientation_d_target_ = Eigen::Quaterniond(initial_transform.linear());
     orientation_d_target_.normalize();
-    
+
     // ---------------------------------------------------------------------------
     // Get mold pose from a file
     // ---------------------------------------------------------------------------
@@ -212,14 +213,14 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // ---------------------------------------------------------------------------
     // Set the controller gains
     // ---------------------------------------------------------------------------
-    // EE frame 
+    // EE frame
     Eigen::Matrix3d Kp(R_d_ * Kp_d_ * R_d_.transpose());  // cartesian position stiffness
     Eigen::Matrix3d Dp(R_d_ * Dp_d_ * R_d_.transpose());  // cartesian position damping
     Eigen::Matrix3d Ko(R_d_ * Ko_d_ * R_d_.transpose());  // cartesian orientation stiffness
     Eigen::Matrix3d Do(R_d_ * Do_d_ * R_d_.transpose());  // cartesian orientation damping
     Eigen::Matrix3d Ip(R_d_ * Ip_d_ * R_d_.transpose());  // cartesian position integrative
     Eigen::Matrix3d Io(R_d_ * Io_d_ * R_d_.transpose());  // cartesian position integrative
-    
+
     cartesian_stiffness_.setIdentity();
     cartesian_stiffness_.topLeftCorner(3, 3) << Kp;
     cartesian_stiffness_.bottomRightCorner(3, 3) << Ko;
@@ -289,7 +290,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // compute the inertia matrix of the task space
     Eigen::Matrix<double, 6, 6> lambda( (J * M.inverse() * J.transpose()).inverse() );
 
-    // Cartesian PD control 
+    // Cartesian PD control
     // tau_task << J.transpose() * lambda * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error );
     tau_task << J.transpose() * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error + cartesian_integral_ * integral_error );
 
@@ -315,12 +316,23 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // ---------------------------------------------------------------------------
     // Compute the EE external wrench (force,torque) acting on EE frame
     // ---------------------------------------------------------------------------
-    Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, tau_d);
-    Eigen::MatrixXd JT_pinv = pseudoInverse(J.transpose(), true); // kinematic pseuoinverse   
-    Eigen::Matrix<double, 6, 1> EE_wrench = (JT_pinv * tau_ext); // end-effector wrench (force,torque)
-    EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];  
+    if(count == 2000){
+       effort_initial = effort;
+    }
+    Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, effort_initial);
     if(count < 2000){
-        EE_force.setZero();
+       tau_ext = effort - tau_d;
+    }
+    Eigen::MatrixXd JT_pinv = pseudoInverse(J.transpose(), true); // kinematic pseudoinverse
+    Eigen::Matrix<double, 6, 1> EE_wrench = (JT_pinv * tau_ext); // end-effector wrench (force,torque)
+    EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];
+    for(int i = 0; i < 3; ++i){
+        if(EE_force[i] > 100.0){
+            EE_force[i] = 100.0;
+        }
+        else if(EE_force[i] < -100.0){
+            EE_force[i] = -100.0;
+        }
     }
     // filtering the EE_force
     for (int i = 0; i < 3; ++i) {
@@ -337,7 +349,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // compliance parameter gains
     Kp_d_ = filter_params_ * Kp_d_target_ + (1.0 - filter_params_) * Kp_d_;
-    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_; 
+    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_;
     Dp_d_ = filter_params_ * Dp_d_target_ + (1.0 - filter_params_) * Dp_d_;
     Do_d_ = filter_params_ * Do_d_target_ + (1.0 - filter_params_) * Do_d_;
     Ip_d_ = filter_params_ * Ip_d_target_ + (1.0 - filter_params_) * Ip_d_;
@@ -347,7 +359,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // publish panda_EE pose
     posePublisherCallback(poseEE_pub, position, orientation);
-    
+
     // publish mold frame
     Eigen::Matrix3d Rmold(points2Rotation(P1, P2, P4));
     Eigen::Vector3d mold_position(P1);
@@ -356,17 +368,17 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // update last integral error
     last_integral_error = integral_error;
-    
+
     // update last EEforce
     EE_force_last = EE_force;
- 
+
 
     // ---------------------------------------------------------------------------
     // Write to file
     // ---------------------------------------------------------------------------
     Eigen::Vector3d euler_angles(R.eulerAngles(2, 1, 0)); // RPY->ZYX(2,1,0)
     Eigen::Vector3d euler_angles_d_(R_d_.eulerAngles(2, 1, 0)); // RPY->ZYX(2,1,0)
-    
+
     count++;
     double TIME = count/1000.0;
     file_tracking << TIME << " "
@@ -416,9 +428,9 @@ double PolishingController::wrapTo2PI(double& angle){
 
 
 void PolishingController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
-    
+
     position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    
+
     Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
     orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;
     if(last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0){
@@ -611,8 +623,8 @@ Eigen::Matrix3d PolishingController::points2Rotation(Eigen::Vector3d& P1, Eigen:
 }
 
 
-Eigen::Matrix<double, 7, 1> PolishingController::externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::VectorXd& command_torque){
-    Eigen::Matrix<double, 7, 1> tau_ext = effort - command_torque;
+Eigen::Matrix<double, 7, 1> PolishingController::externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_initial){
+    Eigen::Matrix<double, 7, 1> tau_ext = effort - effort_initial;
     return tau_ext;
 }
 
@@ -634,8 +646,8 @@ Eigen::MatrixXd PolishingController::pseudoInverse(const Eigen::MatrixXd& M_, bo
 }
 
 
-double PolishingController::lowpassFilter(double sample_time, double y, double y_last, double cutoff_frequency) {  
-    double gain = sample_time / (sample_time + (1.0 / (2.0 * M_PI * cutoff_frequency)));   
+double PolishingController::lowpassFilter(double sample_time, double y, double y_last, double cutoff_frequency) {
+    double gain = sample_time / (sample_time + (1.0 / (2.0 * M_PI * cutoff_frequency)));
     return gain * y + (1 - gain) * y_last;
 }
 

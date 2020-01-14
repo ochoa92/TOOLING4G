@@ -84,6 +84,7 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 6, 1> integral_error;
         Eigen::Matrix<double, 6, 1> last_integral_error;
 
+        Eigen::Matrix<double, 7, 1> effort_initial;
         Eigen::Vector3d EE_force;
         Eigen::Vector3d EE_force_last;
         Eigen::Vector3d EE_force_filtered;
@@ -98,10 +99,10 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         double wrapToPI(double& angle); // Wrap between [-PI, PI]
         double wrapTo2PI(double& angle); // Wrap between [0, 2*PI]
 
-        // Equilibrium pose subscriber 
+        // Equilibrium pose subscriber
         ros::Subscriber sub_equilibrium_pose_;
         void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
-        
+
         // pose publisher
         ros::Publisher poseEE_pub;
         void posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
@@ -143,12 +144,12 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
 
         // publish a Frame
         void publishFrame(tf::TransformBroadcaster& br, tf::Transform& transform, Eigen::Vector3d& position, Eigen::Quaterniond& orientation, std::string base_link, std::string link_name);
-        
+
         // computes a 3D rotation matrix from three 3D points
         Eigen::Matrix3d points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3);
 
         // computes the external torque
-        Eigen::Matrix<double, 7, 1> externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::VectorXd& command_torque);
+        Eigen::Matrix<double, 7, 1> externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_initial);
         Eigen::MatrixXd pseudoInverse(const Eigen::MatrixXd& M_, bool damped);
 
         /**
