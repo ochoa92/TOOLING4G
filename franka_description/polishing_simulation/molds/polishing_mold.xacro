@@ -9,7 +9,7 @@
   <joint name="mold_to_world" type="fixed">
     <parent link="world"/>
     <child link="polishing_mold"/>
-    <origin xyz="0.471134 -0.422512 0.091579" rpy="0.0 0.0 0.0" />
+    <origin xyz="0.465994 -0.408933 0.0877107" rpy="0.0 0.0 0.0" />
     <dynamics damping="1.0" friction="0.0"/>
   </joint>
 

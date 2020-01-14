@@ -327,11 +327,11 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Matrix<double, 6, 1> EE_wrench = (JT_pinv * tau_ext); // end-effector wrench (force,torque)
     EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];
     for(int i = 0; i < 3; ++i){
-        if(EE_force[i] > 100.0){
-            EE_force[i] = 100.0;
+        if(EE_force[i] > 50.0){
+            EE_force[i] = 50.0;
         }
-        else if(EE_force[i] < -100.0){
-            EE_force[i] = -100.0;
+        else if(EE_force[i] < -50.0){
+            EE_force[i] = -50.0;
         }
     }
     // filtering the EE_force
