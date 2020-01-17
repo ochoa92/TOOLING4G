@@ -264,14 +264,14 @@ int main(int argc, char **argv){
             }
             
             // change compliance parameters
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1300.0");
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 12.0;  // 10.0
-            delta_roof << 0.0, 0.0, 0.003;
-            delta_predrill << 0.0, 0.0, 0.006;
+            Fz_max = 10.0;  // 10.0
+            delta_roof << 0.0, 0.0, 0.002;
+            delta_predrill << 0.0, 0.0, 0.005;
             select_drill = 1;
 
             break;
@@ -305,7 +305,18 @@ int main(int argc, char **argv){
                 if(flag_print == 0){
                     std::cout << CLEANWINDOW << "Robot is moving to the station to lubricate the drill..." << std::endl;
                     flag_print = 1;
-                }   
+
+                    // change compliance parameters
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.5");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.5");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.5");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Iox 0.01");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioy 0.01");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.01");
+                    if(systemRet == -1){
+                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    }   
+                }
                 
                 // << MOVE2STATION >>
                 if(flag_station == 0){
@@ -350,13 +361,6 @@ int main(int argc, char **argv){
                         pi << position_d;
                         pf << P(0, n_points_done), P(1, n_points_done), pi(2);
                         t = 0;  // reset time
-
-                        // change compliance parameters
-                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.5");
-                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.5");
-                        if(systemRet == -1){
-                            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                        }
                     }
                 }
                 t = t + delta_t;
@@ -412,12 +416,16 @@ int main(int argc, char **argv){
                         pf << pf + Rd*delta_predrill;
                         t = 0;  // reset time 
 
-                            // change compliance parameters
+                        // change compliance parameters
                         systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
                         systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Iox 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioy 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.0");
                         if(systemRet == -1){
                             std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                        }     
+                        }        
 
                     }
                 }
@@ -454,6 +462,12 @@ int main(int argc, char **argv){
                     p_limit << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                     p_limit << p_limit + Rd*delta_limit;
                     t = 0;  // reset time
+
+                    // change compliance parameters
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 1");
+                    if(systemRet == -1){
+                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    }   
                 }
                 t = t + delta_t;
 
@@ -602,6 +616,12 @@ int main(int argc, char **argv){
                     oi.coeffs() << orientation_d.coeffs();
                     of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
                     t1 = 0.0; // reset orientation time
+
+                    // change compliance parameters
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 0");
+                    if(systemRet == -1){
+                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    }   
                 }
                 t = t + delta_t;
 

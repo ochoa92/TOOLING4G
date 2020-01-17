@@ -62,6 +62,10 @@ class TrainingMode : public controller_interface::MultiInterfaceController< fran
 
     const double delta_tau_max_{1.0};
 
+    Eigen::Vector3d EE_ext_force_franka;
+    Eigen::Vector3d O_ext_force_franka;
+    Eigen::Vector3d EE_ext_force;
+
     int count; // file counter
     std::ofstream file;
 

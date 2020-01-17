@@ -1,7 +1,7 @@
 // =============================================================================
 // Name        : udrilling_05_demo_node.cpp
 // Author      : Hélio Ochoa
-// Description : 0.5 mm 
+// Description : 0.5 mm
 // =============================================================================
 #include <franka_udrilling/udrilling_state.h>
 #include <tf/transform_broadcaster.h>
@@ -9,7 +9,7 @@
 
 
 // =============================================================================
-//                              STATE MACHINE 
+//                              STATE MACHINE
 // =============================================================================
 #define MOVE2STATION 0
 #define MOVE2POINT 1
@@ -32,7 +32,7 @@ int main(int argc, char **argv){
     //                               tf broadcaster
     tf::TransformBroadcaster station_br, pandaEEd_br, mould_br;
     tf::Transform station_tf, pandaEEd_tf, mould_tf;
-    
+
 
     // =============================================================================
     //                            VIZUALIZATION MARKERS
@@ -160,7 +160,7 @@ int main(int argc, char **argv){
     Eigen::VectorXd pose(7,1);
     O_T_EE = panda.O_T_EE;
     pose = panda.robotPose(O_T_EE);
-    
+
 
     // =============================================================================
     //                        TRAJECTORY TO FIRST POINT
@@ -179,8 +179,8 @@ int main(int argc, char **argv){
     of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
     double t1 = 0.0;
     double delta_t1 = delta_t/(tf-ti);
-    
-    // move up 
+
+    // move up
     Eigen::Vector3d delta_up;
     delta_up << 0.0, 0.0, 0.25;
 
@@ -189,20 +189,20 @@ int main(int argc, char **argv){
     //                     DRILLING TRAJECTORY CONDITIONS
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;
     delta_drill << 0.0, 0.0, 0.001;
-    delta_roof << 0.0, 0.0, 0.002;  
-    
-    delta_predrill << 0.0, 0.0, 0.005; 
+    delta_roof << 0.0, 0.0, 0.002;
+
+    delta_predrill << 0.0, 0.0, 0.005;
     delta_point << 0.0, 0.0, 0.003;
 
     delta_goal << 0.0, 0.0, 0.012;
     delta_limit << 0.0, 0.0, 0.016;
-    
+
     Eigen::Vector3d p_roof, p_goal, p_limit, p_hole;
     p_roof.setZero();
     p_goal.setZero();
     p_limit.setZero();
     p_hole.setZero();
-    
+
 
     // =============================================================================
     //                           FORCE LIMIT CONDITIONS
@@ -232,7 +232,7 @@ int main(int argc, char **argv){
     if(systemRet == -1){
         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
     }
-    
+
     ros::Rate loop_rate(1000);
     while(ros::ok()){
 
@@ -243,8 +243,8 @@ int main(int argc, char **argv){
                 if(flag_print == 0){
                     std::cout << CLEANWINDOW << "Robot is moving to the station to lubricate the drill..." << std::endl;
                     flag_print = 1;
-                }   
-                
+                }
+
                 // << MOVE2STATION >>
                 if(flag_station == 0){
                     if( (t >= ti) && (t <= tf) ){
@@ -357,8 +357,8 @@ int main(int argc, char **argv){
                                 pf << p_hole;
                                 flag_lubrication = 0;
                             }
-                            t = 0;  // reset time   
-                        }               
+                            t = 0;  // reset time
+                        }
                     }
                 }
                 t = t + delta_t;
@@ -371,7 +371,7 @@ int main(int argc, char **argv){
                 break;
 
             // ======================================================================
-            case PREDRILL:     
+            case PREDRILL:
                 if(flag_print == 3){
                     std::cout << CLEANWINDOW << "Robot is pre-drilling..." << std::endl;
                     flag_print = 4;
@@ -420,7 +420,7 @@ int main(int argc, char **argv){
                 }
 
                 ///////////////////////////////////////////////
-                //                 Force Limit 
+                //                 Force Limit
                 if( panda.K_F_ext_hat_K[2] > Fz_max ){
                     pf << pi;
                 }
@@ -463,7 +463,7 @@ int main(int argc, char **argv){
 
             // ======================================================================
             case DRILLUP:
-                // << DRILLUP >> 
+                // << DRILLUP >>
                 ti = 0.0;
                 tf = 0.5;
                 if( (t >= ti) && (t <= tf) ){
@@ -486,7 +486,7 @@ int main(int argc, char **argv){
 
             // ======================================================================
             case DRILLDOWN:
-                // << DRILLDOWN >> 
+                // << DRILLDOWN >>
                 ti = 1.0;
                 tf = 2.0;
                 if( (t >= ti) && (t <= tf) ){
@@ -519,7 +519,7 @@ int main(int argc, char **argv){
                     flag_print = 0;
                 }
 
-                // << NEXTPOINT >> 
+                // << NEXTPOINT >>
                 ti = 0.0;
                 tf = 4.0;
                 if( (t >= ti) && (t <= tf) ){
@@ -587,7 +587,7 @@ int main(int argc, char **argv){
 
             // ======================================================================
             case LUBRICATION:
-                // << LUBRICATION >> 
+                // << LUBRICATION >>
                 ti = 0.0;
                 tf = 4.0;
                 if( (t >= ti) && (t <= tf) ){
@@ -614,8 +614,8 @@ int main(int argc, char **argv){
                 break;
 
         } ///////////////////////////////////////////////////////////////////////////
-        
-             
+
+
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
         panda.posePublisherCallback(position_d, orientation_d);
@@ -639,8 +639,8 @@ int main(int argc, char **argv){
 
         // Draw the points
         marker_pub.publish(points);
-        
-        
+
+
         // ============================================================================
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
             break;
@@ -651,5 +651,3 @@ int main(int argc, char **argv){
 
     return 0;
 }
-
-

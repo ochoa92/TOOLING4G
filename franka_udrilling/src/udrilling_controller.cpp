@@ -4,16 +4,16 @@ namespace franka_udrilling {
 
 // ----------------------------------------------------------------------------
 uDrillingController::uDrillingController(){
-    // std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
-    // tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
-    // tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz\n";
-    // tracking_file << "s m m m m m m rad rad rad rad rad rad N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad\n";
+    std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
+    tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
+    tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka Fx Fy Fz\n";
+    tracking_file << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m m m m m m m rad rad rad N N N N N N N N N\n";
 }
 
 // ----------------------------------------------------------------------------
 uDrillingController::~uDrillingController(){
-    // std::cout << "\nTracking file closed!" << std::endl << std::endl;
-    // tracking_file.close();
+    std::cout << "\nTracking file closed!" << std::endl << std::endl;
+    tracking_file.close();
 }
 
 // ----------------------------------------------------------------------------
@@ -95,7 +95,7 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
 
     Ko_d_.setZero();
     Do_d_.setZero();
-    
+
     Ip_d_.setZero();
     Io_d_.setZero();
 
@@ -128,7 +128,7 @@ void uDrillingController::starting(const ros::Time& /*time*/){
 
     // compute initial velocity with jacobian and set x_attractor to initial configuration
     franka::RobotState initial_state = state_handle_->getRobotState();
-    
+
     // get jacobian
     std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
 
@@ -160,21 +160,21 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     std::array<double, 49> mass_array = model_handle_->getMass();
 
     // convert to Eigen
-    Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
-    Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
-    Eigen::Map<Eigen::Matrix<double, 7, 7>> mass(mass_array.data());
-    Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
-    Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data()); // joint position
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data()); // joint velocity
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data()); // coriolis force vector
+    Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data()); // jacobian for the given joint relative to the base frame
+    Eigen::Map<Eigen::Matrix<double, 7, 7>> mass(mass_array.data()); // mass matrix (inertia matrix)
     Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); // NOLINT (readability-identifier-naming)
-    Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame
-    Eigen::Map<Eigen::Matrix<double, 6, 1>> O_force(robot_state.O_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame
-    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_ext_hat_filtered.data()); // External torque, filtered. 
+    Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force_franka(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame (by Franka)
+    Eigen::Map<Eigen::Matrix<double, 6, 1>> O_force_franka(robot_state.O_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame (by Franka)
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_ext_hat_filtered.data()); // External torque, filtered.
 
     Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
     Eigen::Vector3d position(transform.translation());
     Eigen::Quaterniond orientation(transform.linear());
     Eigen::Matrix3d R(transform.rotation());
-    
+
 
     // ---------------------------------------------------------------------------
     // Set the impedance controller gains
@@ -201,7 +201,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     cartesian_integral_.topLeftCorner(3, 3) << Ip;
     cartesian_integral_.bottomRightCorner(3, 3) << Io;
     // std::cout << "\n" << cartesian_integral_ << std::endl;
-   
+
     // ---------------------------------------------------------------------------
     // compute error to desired pose
     // ---------------------------------------------------------------------------
@@ -270,6 +270,9 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     // nullspace controll for posture optimization
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_dcgi.transpose()) * tau_o;
 
+    // computed external wrench (force, torque)
+    Eigen::Matrix<double, 6, 1> EE_force = jacobian_dcgi.transpose() * (-1.0) * tau_measured;
+
     tau_measured << K_external_torque_ * tau_measured;
     // std::cout << "\n" << tau_measured << std::endl;
 
@@ -295,7 +298,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     // compliance parameter gains
     Kp_d_ = filter_params_ * Kp_d_target_ + (1.0 - filter_params_) * Kp_d_;
-    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_; 
+    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_;
     Dp_d_ = filter_params_ * Dp_d_target_ + (1.0 - filter_params_) * Dp_d_;
     Do_d_ = filter_params_ * Do_d_target_ + (1.0 - filter_params_) * Do_d_;
     Ip_d_ = filter_params_ * Ip_d_target_ + (1.0 - filter_params_) * Ip_d_;
@@ -309,7 +312,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
 
     // update last integral error
-    last_integral_error = integral_error; 
+    last_integral_error = integral_error;
 
     // update pose publishers
     posePublisherCallback(poseEE_pub, position, orientation);
@@ -328,37 +331,26 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Vector3d position_EE_d_(R_d_*position_d_); // current position in EE frame
 
     count++;
-    // double TIME = count/1000.0;
-    // tracking_file << TIME << " "
-    //               << position[0] << " " << position_d_[0] << " "
-    //               << position[1] << " " << position_d_[1] << " "
-    //               << position[2] << " " << position_d_[2] << " "
-    //               << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
-    //               << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
-    //               << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
-    //               << EE_force[0] << " " 
-    //               << EE_force[1] << " " 
-    //               << EE_force[2] << " " 
-    //               << O_force[0] << " "
-    //               << O_force[1] << " "
-    //               << O_force[2] << " "
-    //               << error[0] << " "
-    //               << error[1] << " "
-    //               << error[2] << " "
-    //               << error[3] << " "
-    //               << error[4] << " "
-    //               << error[5] << " "
-    //               << position_EE[0] << " " << position_EE_d_[0] << " "
-    //               << position_EE[1] << " " << position_EE_d_[1] << " "
-    //               << position_EE[2] << " " << position_EE_d_[2] << " "
-    //               << integral_error[0] << " "
-    //               << integral_error[1] << " "
-    //               << integral_error[2] << " "
-    //               << integral_error[3] << " "
-    //               << integral_error[4] << " "
-    //               << integral_error[5] << "\n";
+    double TIME = count/1000.0;
+    tracking_file << TIME << " "
+                  << position[0] << " " << position_d_[0] << " "
+                  << position[1] << " " << position_d_[1] << " "
+                  << position[2] << " " << position_d_[2] << " "
+                  << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
+                  << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
+                  << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
+                  << error[0] << " " << error[1] << " " << error[2] << " "
+                  << error[3] << " " << error[4] << " " << error[5] << " "
+                  << position_EE[0] << " " << position_EE_d_[0] << " "
+                  << position_EE[1] << " " << position_EE_d_[1] << " "
+                  << position_EE[2] << " " << position_EE_d_[2] << " "
+                  << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
+                  << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
+                  << EE_force_franka[0] << " " << EE_force_franka[1] << " " << EE_force_franka[2] << " "
+                  << O_force_franka[0] << " " << O_force_franka[1] << " " << O_force_franka[2] << " "
+                  << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << "\n";
 
-    // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;           
+    // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;
 
 }
 
@@ -374,7 +366,7 @@ Eigen::Matrix<double, 7, 1> uDrillingController::saturateTorqueRate(const Eigen:
 }
 
 // ----------------------------------------------------------------------------
-Eigen::Vector3d uDrillingController::R2r(Eigen::Matrix3d& Rotation){ 
+Eigen::Vector3d uDrillingController::R2r(Eigen::Matrix3d& Rotation){
     Eigen::Vector3d aux, rotation_vector;
     aux << Rotation(2,1) - Rotation(1,2),
            Rotation(0,2) - Rotation(2,0),
@@ -384,13 +376,13 @@ Eigen::Vector3d uDrillingController::R2r(Eigen::Matrix3d& Rotation){
 }
 
 // ----------------------------------------------------------------------------
-double uDrillingController::wrapToPI(double& angle){ 
+double uDrillingController::wrapToPI(double& angle){
     double new_angle = atan2(sin(angle), cos(angle));
     return new_angle;
 }
 
 // ----------------------------------------------------------------------------
-double uDrillingController::wrapTo2PI(double& angle){ 
+double uDrillingController::wrapTo2PI(double& angle){
     double new_angle = asin(sin(angle));
     if(cos(angle) < 0){
         new_angle = M_PI-new_angle;
@@ -421,9 +413,9 @@ void uDrillingController::gradient_mechanical_joint_limit( Eigen::Matrix<double,
 
 // ----------------------------------------------------------------------------
 void uDrillingController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
-    
+
     position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    
+
     Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
     orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;
     if(last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0){
@@ -501,7 +493,7 @@ void uDrillingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen:
 
 
 void uDrillingController::errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error){
-    
+
     geometry_msgs::Twist robot_error;
 
     robot_error.linear.x = error[0];

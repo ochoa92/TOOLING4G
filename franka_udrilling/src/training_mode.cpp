@@ -8,8 +8,10 @@ TrainingMode::TrainingMode(){
   std::string path;
   path = "/home/panda/kst/udrilling/user_pattern";
   file.open(path, std::ofstream::out);
-  file << " t p_x p_y p_z Q_x Q_y Q_z Q_w Fx Fy Fz pEE_x pEE_y pEE_z\n";
-  file << " s m m m Qunit Qunit Qunit Qunit N N N m m m\n";
+  // file << " t p_x p_y p_z Q_x Q_y Q_z Q_w Fx Fy Fz pEE_x pEE_y pEE_z\n";
+  // file << " s m m m Qunit Qunit Qunit Qunit N N N m m m\n";
+  file << "t FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka FxEE FyEE FzEE\n";
+  file << "s N N N N N N N N N\n";
 }
 
 
@@ -75,6 +77,10 @@ bool TrainingMode::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& 
     }
   }
 
+  EE_ext_force_franka.setZero();
+  O_ext_force_franka.setZero();
+  EE_ext_force.setZero();
+
   // Create publisher
   pose_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/robot_poseEE", 20);
 
@@ -85,32 +91,63 @@ bool TrainingMode::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& 
 
 
 void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
+  
   // get state variables
   franka::RobotState robot_state = state_handle_->getRobotState();
+  std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
+  std::array<double, 49> mass_array = model_handle_->getMass();
+  std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
 
   // convert to Eigen
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data()); // joint position 
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data()); // joint velocity
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); // NOLINT (readability-identifier-naming)
-  Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame
+  Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data()); // jacobian for the given joint relative to the base frame
+  Eigen::Map<Eigen::Matrix<double, 7, 7>> mass(mass_array.data()); // mass matrix (inertia matrix)
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data()); // coriolis force vector
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_ext(robot_state.tau_ext_hat_filtered.data()); // external torque, filtered. 
+  Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_ext_wrench_franka(robot_state.K_F_ext_hat_K.data()); // estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame
+  Eigen::Map<Eigen::Matrix<double, 6, 1>> O_ext_wrench_franka(robot_state.O_F_ext_hat_K.data()); // estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame.
+  
+  EE_ext_force_franka << EE_ext_wrench_franka[0], EE_ext_wrench_franka[1], EE_ext_wrench_franka[2]; //  estimated external force provided by franka 
+  O_ext_force_franka << O_ext_wrench_franka[0], O_ext_wrench_franka[1], O_ext_wrench_franka[2]; //  estimated external force provided by franka in base frame
 
-  Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data())); // Measured end effector pose in base frame.
+  Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data())); // end-effector pose in base frame.
   Eigen::Vector3d position(transform.translation());
   Eigen::Quaterniond orientation(transform.linear());
   Eigen::Matrix3d R(transform.rotation());
 
-  Eigen::Vector3d positionEE(R*position); // Measured end effector pose in end effector frame.
+  Eigen::Vector3d positionEE(R*position); // end-effector pose in end effector frame.
 
+
+  // -------------------------------------------------
+  // compute the inertia matrix of the task space
+  Eigen::Matrix<double, 6, 6> lambda( (jacobian * mass.inverse() * jacobian.transpose()).inverse() );
+
+  // Dynamically consistent generalized inverse of the jacobian
+  Eigen::Matrix<double, 7, 6> jacobian_dcgi = mass.inverse() * jacobian.transpose() * lambda;
+
+  // Computed external wrench (force, torque)
+  Eigen::Matrix<double, 6, 1> EE_ext_wrench = jacobian_dcgi.transpose() * (-1.0) * tau_ext;
+
+  EE_ext_force << EE_ext_wrench[0], EE_ext_wrench[1], EE_ext_wrench[2]; //  estimated external force
+  // -------------------------------------------------
 
   posePublisherCallback(pose_pub, robot_pose, position, orientation);
 
   // allocate variables
-  Eigen::VectorXd tau_task(7), tau_d(7);
-  tau_task << 0, 0, 0, 0, 0, 0, 0;
+  Eigen::VectorXd tau_task(7), tau_d(7), F(6);
+  
+  // tau = JT*F
+  // F << 5.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+  // tau_task << jacobian.transpose() * F;
+  
+  tau_task << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 
   // Desired torque
   tau_d << tau_task;
   // std::cout << "\n" << tau_d << std::endl;
+
 
   // Saturate torque rate to avoid discontinuities
   tau_d << saturateTorqueRate(tau_d, tau_J_d);
@@ -123,21 +160,26 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
   // ---------------------------------------------------------------------------
   count++;
   double t = count/1000.0;
-  file << " " << t << " "
-       << position[0] << " "
-       << position[1] << " "
-       << position[2] << " "
-       << orientation.vec()[0] << " "
-       << orientation.vec()[1] << " "
-       << orientation.vec()[2] << " "
-       << orientation.w() << " "
-       << EE_force[0] << " "
-       << EE_force[1] << " "
-       << EE_force[2] << " "
-       << positionEE[0] << " "
-       << positionEE[1] << " "
-       << positionEE[2] << "\n";
+  // file << t << " "
+  //      << position[0] << " "
+  //      << position[1] << " "
+  //      << position[2] << " "
+  //      << orientation.vec()[0] << " "
+  //      << orientation.vec()[1] << " "
+  //      << orientation.vec()[2] << " "
+  //      << orientation.w() << " "
+  //      << EE_ext_force_franka[0] << " "
+  //      << EE_ext_force_franka[1] << " "
+  //      << EE_ext_force_franka[2] << " "
+  //      << positionEE[0] << " "
+  //      << positionEE[1] << " "
+  //      << positionEE[2] << "\n";
 
+  file << t << " "
+       << EE_ext_force_franka[0] << " " << EE_ext_force_franka[1] << " "  << EE_ext_force_franka[2] << " "
+       << O_ext_force_franka[0] << " "  << O_ext_force_franka[1] << " "  << O_ext_force_franka[2] << " "
+       << EE_ext_force[0] << " "  << EE_ext_force[1] << " "  << EE_ext_force[2] << "\n";
+ 
 }
 
 

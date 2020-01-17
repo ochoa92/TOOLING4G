@@ -1,7 +1,7 @@
 // =============================================================================
 // Name        : udrilling_06_demo_node.cpp
 // Author      : Hélio Ochoa
-// Description : 0.6 mm 
+// Description : 0.6 mm
 // =============================================================================
 #include <franka_udrilling/spacenav.h>
 #include <tf/transform_broadcaster.h>
@@ -202,8 +202,8 @@ int main(int argc, char **argv){
   Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_goal, delta_limit, delta_point;
   delta_drill << 0.0, 0.0, 0.001;
   delta_roof << 0.0, 0.0, 0.001;
-  delta_predrill << 0.0, 0.0, 0.01; 
-  delta_point << 0.0, 0.0, 0.005; 
+  delta_predrill << 0.0, 0.0, 0.01;
+  delta_point << 0.0, 0.0, 0.005;
   delta_goal << 0.0, 0.0, 0.008;  // 0.008, 0.01
   delta_limit << 0.0, 0.0, 0.012; // 0.012, 0.015
   Eigen::Vector3d p_roof, p_goal, p_limit;
@@ -225,7 +225,7 @@ int main(int argc, char **argv){
   int flag_interrupt = 0;
   int n_points_done = 0;
   double result = 0.0;
-  
+
   // change compliance parameters
   int systemRet = 0;
   systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1700.0");
@@ -375,7 +375,7 @@ int main(int argc, char **argv){
           pi << position_d;
           pf << pi + Rd*delta_predrill;
           t = 0;  // reset time
-          
+
           // change compliance parameters
           systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
           systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
