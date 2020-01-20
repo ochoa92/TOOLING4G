@@ -463,10 +463,10 @@ int main(int argc, char **argv){
                     t = 0;  // reset time
 
                     // change compliance parameters
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 1");
-                    if(systemRet == -1){
-                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                    }   
+                    // systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 1");
+                    // if(systemRet == -1){
+                    //     std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    // }   
                 }
                 t = t + delta_t;
 
@@ -617,10 +617,10 @@ int main(int argc, char **argv){
                     t1 = 0.0; // reset orientation time
 
                     // change compliance parameters
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 0");
-                    if(systemRet == -1){
-                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                    }   
+                    // systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 0");
+                    // if(systemRet == -1){
+                    //     std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    // }   
                 }
                 t = t + delta_t;
 
