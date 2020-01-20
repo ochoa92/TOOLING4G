@@ -252,6 +252,7 @@ int main(int argc, char **argv){
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
+            Fz_max = 10.0;  // 10.0
             select_drill = 1;
 
             break;
@@ -270,8 +271,6 @@ int main(int argc, char **argv){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
             Fz_max = 10.0;  // 10.0
-            delta_roof << 0.0, 0.0, 0.002;
-            delta_predrill << 0.0, 0.0, 0.005;
             select_drill = 1;
 
             break;
@@ -310,9 +309,9 @@ int main(int argc, char **argv){
                     systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.5");
                     systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.5");
                     systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.5");
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Iox 0.01");
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioy 0.01");
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.01");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Iox 0.05");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioy 0.05");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.05");
                     if(systemRet == -1){
                         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
                     }   

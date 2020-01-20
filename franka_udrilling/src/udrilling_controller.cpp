@@ -6,8 +6,11 @@ namespace franka_udrilling {
 uDrillingController::uDrillingController(){
     std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
     tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
-    tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka Fx Fy Fz\n";
-    tracking_file << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m m m m m m m rad rad rad N N N N N N N N N\n";
+    // tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka Fx Fy Fz\n";
+    // tracking_file << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m m m m m m m rad rad rad N N N N N N N N N\n";
+
+    tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d e_px e_py e_pz e_ox e_oy e_oz FxEE_franka FyEE_franka FzEE_franka Fx Fy Fz\n";
+    tracking_file << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad N N N N N N\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -108,6 +111,8 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
 
+    EE_force.setZero();
+
     K_external_torque_.setZero();
     K_external_torque_target_.setZero();
 
@@ -166,8 +171,8 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data()); // jacobian for the given joint relative to the base frame
     Eigen::Map<Eigen::Matrix<double, 7, 7>> mass(mass_array.data()); // mass matrix (inertia matrix)
     Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); // NOLINT (readability-identifier-naming)
-    Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_force_franka(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame (by Franka)
-    Eigen::Map<Eigen::Matrix<double, 6, 1>> O_force_franka(robot_state.O_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame (by Franka)
+    Eigen::Map<Eigen::Matrix<double, 6, 1>> EE_wrench_franka(robot_state.K_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the stiffness frame (by Franka)
+    Eigen::Map<Eigen::Matrix<double, 6, 1>> O_wrench_franka(robot_state.O_F_ext_hat_K.data()); // Estimated external wrench (force, torque) acting on stiffness frame, expressed relative to the base frame (by Franka)
     Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_ext_hat_filtered.data()); // External torque, filtered.
 
     Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
@@ -271,7 +276,9 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_dcgi.transpose()) * tau_o;
 
     // computed external wrench (force, torque)
-    Eigen::Matrix<double, 6, 1> EE_force = jacobian_dcgi.transpose() * (-1.0) * tau_measured;
+    Eigen::Matrix<double, 6, 1> EE_wrench = jacobian_dcgi.transpose() * (-1.0) * tau_measured;
+    EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];
+    EE_force << R_d_.transpose() * EE_force;
 
     tau_measured << K_external_torque_ * tau_measured;
     // std::cout << "\n" << tau_measured << std::endl;
@@ -332,6 +339,24 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     count++;
     double TIME = count/1000.0;
+    // tracking_file << TIME << " "
+    //               << position[0] << " " << position_d_[0] << " "
+    //               << position[1] << " " << position_d_[1] << " "
+    //               << position[2] << " " << position_d_[2] << " "
+    //               << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
+    //               << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
+    //               << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
+    //               << error[0] << " " << error[1] << " " << error[2] << " "
+    //               << error[3] << " " << error[4] << " " << error[5] << " "
+    //               << position_EE[0] << " " << position_EE_d_[0] << " "
+    //               << position_EE[1] << " " << position_EE_d_[1] << " "
+    //               << position_EE[2] << " " << position_EE_d_[2] << " "
+    //               << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
+    //               << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
+    //               << EE_wrench_franka[0] << " " << EE_wrench_franka[1] << " " << EE_wrench_franka[2] << " "
+    //               << O_wrench_franka[0] << " " << O_wrench_franka[1] << " " << O_wrench_franka[2] << " "
+    //               << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << "\n";
+
     tracking_file << TIME << " "
                   << position[0] << " " << position_d_[0] << " "
                   << position[1] << " " << position_d_[1] << " "
@@ -341,13 +366,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
                   << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
                   << error[0] << " " << error[1] << " " << error[2] << " "
                   << error[3] << " " << error[4] << " " << error[5] << " "
-                  << position_EE[0] << " " << position_EE_d_[0] << " "
-                  << position_EE[1] << " " << position_EE_d_[1] << " "
-                  << position_EE[2] << " " << position_EE_d_[2] << " "
-                  << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
-                  << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
-                  << EE_force_franka[0] << " " << EE_force_franka[1] << " " << EE_force_franka[2] << " "
-                  << O_force_franka[0] << " " << O_force_franka[1] << " " << O_force_franka[2] << " "
+                  << EE_wrench_franka[0] << " " << EE_wrench_franka[1] << " " << EE_wrench_franka[2] << " "
                   << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << "\n";
 
     // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;
