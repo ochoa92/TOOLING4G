@@ -316,6 +316,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // ---------------------------------------------------------------------------
     // Compute the EE external wrench (force,torque) acting on EE frame
     // ---------------------------------------------------------------------------
+    // Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, tau_d);
     if(count == 2000){
        effort_initial = effort;
     }
@@ -323,15 +324,15 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     if(count < 2000){
        tau_ext = effort - tau_d;
     }
-    Eigen::MatrixXd JT_pinv = pseudoInverse(J.transpose(), true); // kinematic pseudoinverse
-    Eigen::Matrix<double, 6, 1> EE_wrench = (JT_pinv * tau_ext); // end-effector wrench (force,torque)
+    Eigen::Matrix<double, 6, 1> EE_wrench = J_dcgi.transpose() * (-1.0) * tau_ext; // end-effector wrench (force,torque)
     EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];
+    EE_force << R_d_.transpose() * EE_force;
     for(int i = 0; i < 3; ++i){
-        if(EE_force[i] > 50.0){
-            EE_force[i] = 50.0;
+        if(EE_force[i] > 100.0){
+            EE_force[i] = 100.0;
         }
-        else if(EE_force[i] < -50.0){
-            EE_force[i] = -50.0;
+        else if(EE_force[i] < -100.0){
+            EE_force[i] = -100.0;
         }
     }
     // filtering the EE_force
@@ -623,26 +624,15 @@ Eigen::Matrix3d PolishingController::points2Rotation(Eigen::Vector3d& P1, Eigen:
 }
 
 
+// Eigen::Matrix<double, 7, 1> PolishingController::externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::VectorXd& command_torque){
+//     Eigen::Matrix<double, 7, 1> tau_ext = effort - command_torque;
+//     return tau_ext;
+// }
+
+
 Eigen::Matrix<double, 7, 1> PolishingController::externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_initial){
     Eigen::Matrix<double, 7, 1> tau_ext = effort - effort_initial;
     return tau_ext;
-}
-
-
-Eigen::MatrixXd PolishingController::pseudoInverse(const Eigen::MatrixXd& M_, bool damped){
-    double lambda_ = damped ? 0.2 : 0.0;
-
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(M_, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType sing_vals_ = svd.singularValues();
-    Eigen::MatrixXd S_ = M_;  // copying the dimensions of M_, its content is not needed.
-    S_.setZero();
-
-    for (int i = 0; i < sing_vals_.size(); i++)
-        S_(i, i) = (sing_vals_(i)) / (sing_vals_(i) * sing_vals_(i) + lambda_ * lambda_);
-
-    Eigen::MatrixXd M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
-
-    return M_pinv_;
 }
 
 

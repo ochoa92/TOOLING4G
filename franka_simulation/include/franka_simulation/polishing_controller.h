@@ -150,7 +150,7 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
 
         // computes the external torque
         Eigen::Matrix<double, 7, 1> externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_initial);
-        Eigen::MatrixXd pseudoInverse(const Eigen::MatrixXd& M_, bool damped);
+        // Eigen::Matrix<double, 7, 1> externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::VectorXd& command_torque);
 
         /**
          * Applies a first-order low-pass filter
