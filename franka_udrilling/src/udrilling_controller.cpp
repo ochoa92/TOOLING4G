@@ -4,8 +4,9 @@ namespace franka_udrilling {
 
 // ----------------------------------------------------------------------------
 uDrillingController::uDrillingController(){
-    std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
-    tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
+    // std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
+    // tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
+    
     // tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka Fx Fy Fz\n";
     // tracking_file << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m m m m m m m rad rad rad N N N N N N N N N\n";
 
@@ -339,6 +340,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
     count++;
     double TIME = count/1000.0;
+    
     // tracking_file << TIME << " "
     //               << position[0] << " " << position_d_[0] << " "
     //               << position[1] << " " << position_d_[1] << " "
