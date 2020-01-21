@@ -172,12 +172,12 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     // ---------------------------------------------------------------------------
     // Set the controller gains
     // ---------------------------------------------------------------------------
-    // EE frame 
+    // EE frame
     Eigen::Matrix3d Kp(R_d_ * Kp_d_ * R_d_.transpose());  // cartesian position stiffness
     Eigen::Matrix3d Dp(R_d_ * Dp_d_ * R_d_.transpose());  // cartesian position damping
     Eigen::Matrix3d Ko(R_d_ * Ko_d_ * R_d_.transpose());  // cartesian orientation stiffness
     Eigen::Matrix3d Do(R_d_ * Do_d_ * R_d_.transpose());  // cartesian orientation damping
-    
+
     // Base frame
     // Eigen::Matrix3d Kp(Kp_d_);  // cartesian position stiffness
     // Eigen::Matrix3d Dp(Dp_d_);  // cartesian position damping
@@ -218,7 +218,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     // compute the inertia matrix of the task space
     Eigen::Matrix<double, 6, 6> lambda( (J * M.inverse() * J.transpose()).inverse() );
 
-    // Cartesian PD control 
+    // Cartesian PD control
     // tau_task << J.transpose() * lambda * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error );
     tau_task << J.transpose() * ( cartesian_damping_ * velocity_error + cartesian_stiffness_ * error );
 
@@ -236,6 +236,11 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
     tau_d << tau_task + tau_nullspace + C + g;
     // std::cout << tau_d << std::endl;
 
+    // tau = JT * F
+    // Eigen::VectorXd F(6);
+    // F << 20.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    // tau_d << J.transpose() * F + g;
+
     for (size_t i = 0; i < 7; ++i) {
         joint_handles_[i].setCommand(tau_d(i));
     }
@@ -250,7 +255,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
 
     // compliance parameter gains
     Kp_d_ = filter_params_ * Kp_d_target_ + (1.0 - filter_params_) * Kp_d_;
-    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_; 
+    Ko_d_ = filter_params_ * Ko_d_target_ + (1.0 - filter_params_) * Ko_d_;
     Dp_d_ = filter_params_ * Dp_d_target_ + (1.0 - filter_params_) * Dp_d_;
     Do_d_ = filter_params_ * Do_d_target_ + (1.0 - filter_params_) * Do_d_;
 
@@ -258,13 +263,13 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
 
     // publish panda_EE pose
     posePublisherCallback(poseEE_pub, position, orientation);
-    
+
     // ---------------------------------------------------------------------------
     // Write to file
     // ---------------------------------------------------------------------------
     Eigen::Vector3d euler_angles(R.eulerAngles(2, 1, 0)); // RPY->ZYX(2,1,0)
     Eigen::Vector3d euler_angles_d_(R_d_.eulerAngles(2, 1, 0)); // RPY->ZYX(2,1,0)
-    
+
     count++;
     double TIME = count/1000.0;
     file_tracking << " " << TIME << " "
@@ -314,9 +319,9 @@ double CartesianImpedanceController::wrapTo2PI(double& angle){
 
 
 void CartesianImpedanceController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
-    
+
     position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    
+
     Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
     orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;
     if(last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0){

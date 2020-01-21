@@ -421,7 +421,7 @@ int main(int argc, char** argv) {
                 }
                 else if(t > tf){
                     if(n_points < n_mold-1){
-                        n_points++; // next point        
+                        n_points++; // next point
                     }
                     else{
                         if(flag_print == 0){
