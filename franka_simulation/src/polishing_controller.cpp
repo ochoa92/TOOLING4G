@@ -324,7 +324,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     if(count < 2000){
        tau_ext = effort - tau_d;
     }
-    Eigen::Matrix<double, 6, 1> EE_wrench = J_dcgi.transpose() * (-1.0) * tau_ext; // end-effector wrench (force,torque)
+    Eigen::Matrix<double, 6, 1> EE_wrench = J_dcgi.transpose() * tau_ext; // end-effector wrench (force,torque)
     EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];
     EE_force << R_d_.transpose() * EE_force;
     for(int i = 0; i < 3; ++i){

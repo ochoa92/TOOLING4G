@@ -92,7 +92,8 @@ class uDrillingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix3d Ip_d_target_, Io_d_target_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_;
         Eigen::Matrix<double, 7, 7> nullspace_stiffness_target_;
-        Eigen::Vector3d EE_force; // end-effector force in end-effector frame
+        Eigen::Vector3d O_force; // force in base frame
+        Eigen::Vector3d EE_force; // force in end-effector frame
 
         Eigen::Matrix<double, 7, 7> K_external_torque_;
         Eigen::Matrix<double, 7, 7> K_external_torque_target_;

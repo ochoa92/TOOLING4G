@@ -10,8 +10,8 @@ TrainingMode::TrainingMode(){
   file.open(path, std::ofstream::out);
   // file << " t p_x p_y p_z Q_x Q_y Q_z Q_w Fx Fy Fz pEE_x pEE_y pEE_z\n";
   // file << " s m m m Qunit Qunit Qunit Qunit N N N m m m\n";
-  file << "t FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka FxEE FyEE FzEE\n";
-  file << "s N N N N N N N N N\n";
+  file << "t FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka FxEE FyEE FzEE FxO FyO FzO\n";
+  file << "s N N N N N N N N N N N N\n";
 }
 
 
@@ -79,6 +79,7 @@ bool TrainingMode::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& 
 
   EE_ext_force_franka.setZero();
   O_ext_force_franka.setZero();
+  O_ext_force.setZero();
   EE_ext_force.setZero();
 
   // Create publisher
@@ -117,7 +118,7 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
   Eigen::Quaterniond orientation(transform.linear());
   Eigen::Matrix3d R(transform.rotation());
 
-  Eigen::Vector3d positionEE(R*position); // end-effector pose in end effector frame.
+  Eigen::Vector3d positionEE = R.transpose() * position; // end-effector pose in end effector frame.
 
 
   // -------------------------------------------------
@@ -128,9 +129,9 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
   Eigen::Matrix<double, 7, 6> jacobian_dcgi = mass.inverse() * jacobian.transpose() * lambda;
 
   // Computed external wrench (force, torque)
-  Eigen::Matrix<double, 6, 1> EE_ext_wrench = jacobian_dcgi.transpose() * (-1.0) * tau_ext;
-
-  EE_ext_force << EE_ext_wrench[0], EE_ext_wrench[1], EE_ext_wrench[2]; //  estimated external force
+  Eigen::Matrix<double, 6, 1> O_ext_wrench = jacobian_dcgi.transpose() * tau_ext;
+  O_ext_force << O_ext_wrench[0], O_ext_wrench[1], O_ext_wrench[2]; //  estimated external force
+  EE_ext_force << R.transpose() * O_ext_force;
   // -------------------------------------------------
 
   posePublisherCallback(pose_pub, robot_pose, position, orientation);
@@ -178,7 +179,8 @@ void TrainingMode::update(const ros::Time& /*time*/, const ros::Duration& /*peri
   file << t << " "
        << EE_ext_force_franka[0] << " " << EE_ext_force_franka[1] << " "  << EE_ext_force_franka[2] << " "
        << O_ext_force_franka[0] << " "  << O_ext_force_franka[1] << " "  << O_ext_force_franka[2] << " "
-       << EE_ext_force[0] << " "  << EE_ext_force[1] << " "  << EE_ext_force[2] << "\n";
+       << EE_ext_force[0] << " "  << EE_ext_force[1] << " "  << EE_ext_force[2] << " "
+       << O_ext_force[0] << " "  << O_ext_force[1] << " "  << O_ext_force[2] << "\n";
  
 }
 

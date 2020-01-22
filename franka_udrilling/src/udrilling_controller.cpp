@@ -112,6 +112,7 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
 
+    O_force.setZero();
     EE_force.setZero();
 
     K_external_torque_.setZero();
@@ -277,9 +278,9 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) - jacobian.transpose() * jacobian_dcgi.transpose()) * tau_o;
 
     // computed external wrench (force, torque)
-    Eigen::Matrix<double, 6, 1> EE_wrench = jacobian_dcgi.transpose() * (-1.0) * tau_measured;
-    EE_force << EE_wrench[0], EE_wrench[1], EE_wrench[2];
-    EE_force << R_d_.transpose() * EE_force;
+    Eigen::Matrix<double, 6, 1> O_wrench = jacobian_dcgi.transpose() * tau_measured;
+    O_force << O_wrench[0], O_wrench[1], O_wrench[2]; // base frame
+    EE_force << R_d_.transpose() * O_force; // end-effector frame
 
     tau_measured << K_external_torque_ * tau_measured;
     // std::cout << "\n" << tau_measured << std::endl;
@@ -339,8 +340,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     Eigen::Vector3d position_EE_d_(R_d_.transpose() * position_d_); // current position in EE frame
 
     count++;
-    double TIME = count/1000.0;
-    
+    // double TIME = count/1000.0; 
     // tracking_file << TIME << " "
     //               << position[0] << " " << position_d_[0] << " "
     //               << position[1] << " " << position_d_[1] << " "
