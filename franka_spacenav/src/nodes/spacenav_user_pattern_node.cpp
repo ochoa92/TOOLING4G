@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   MatrixXd pose_d;  // matrix to save the robot poses
   ifstream infile;
   string path;
-  path = "/home/helio/kst/franka/torque_controller";
+  path = "/home/panda/kst/franka/torque_controller";
   infile.open(path);
 
   double time, p_xd, p_yd, p_zd, Q_xd, Q_yd, Q_zd, Q_wd, Fx, Fy, Fz;

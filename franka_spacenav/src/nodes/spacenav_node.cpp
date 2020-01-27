@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
   std::ofstream file;
   string path;
-  path = "/home/helio/kst/franka/robot_patterns/pattern";
+  path = "/home/panda/kst/franka/robot_patterns/pattern";
   file.open(path);
   file << " p_xd p_yd p_zd Qxd Qyd Qzd Qwd\n";
 

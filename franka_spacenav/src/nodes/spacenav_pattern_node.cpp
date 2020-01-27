@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   MatrixXd pose_d;  // matrix to save the robot poses
   ifstream infile;
   string path;
-  path = "/home/helio/kst/franka/robot_patterns/pattern";
+  path = "/home/panda/kst/franka/robot_patterns/pattern";
   infile.open(path);
 
   double p_xd, p_yd, p_zd, Q_xd, Q_yd, Q_zd, Q_wd;

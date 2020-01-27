@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   MatrixXd POINTS;  // matrix to save the mould points
   ifstream file_points;
   string path_points;
-  path_points = "/home/helio/catkin_ws/src/TOOLING4G/franka_spacenav/spacenav_data/points";
+  path_points = "/home/panda/catkin_ws/src/TOOLING4G/franka_spacenav/spacenav_data/points";
   file_points.open(path_points);
 
   double X, Y, Z;
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
   // ---------------------------------------------------------------------------
   ifstream file_desired_o;
   string path_desired_o;
-  path_desired_o = "/home/helio/catkin_ws/src/TOOLING4G/franka_spacenav/spacenav_data/desired_o";
+  path_desired_o = "/home/panda/catkin_ws/src/TOOLING4G/franka_spacenav/spacenav_data/desired_o";
   file_desired_o.open(path_desired_o);
 
   double qx, qy, qz, qw;

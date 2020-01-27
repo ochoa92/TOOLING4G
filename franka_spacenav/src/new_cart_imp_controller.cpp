@@ -18,7 +18,7 @@ namespace franka_spacenav {
 NewCartImpController::NewCartImpController(){
   std::cout << "Open the file to write!" << std::endl;
   std::string path;
-  path = "/home/helio/kst/franka/new_cart_imp_controller";
+  path = "/home/panda/kst/franka/new_cart_imp_controller";
   file.open(path,std::ofstream::out);
   file << " t; p_x; p_xd; p_y; p_yd; p_z; p_zd; Yaw(X); Yaw_d(Xd); Pitch(Y); Pitch_d(Yd); Roll(Z); Roll(Zd); v_x; v_xd; v_y; v_yd; v_z; v_zd; w_x; w_xd; w_y; w_yd; w_z; w_zd; r_x; r_xd; r_y; r_yd; r_z; r_zd; Fx; Fy; Fz\n";
   file << " s; m; m; m; m; m; m; rad; rad; rad; rad; rad; rad; m/s; m/s; m/s; m/s; m/s; m/s; rad/s; rad/s; rad/s; rad/s; rad/s; rad/s; rad; rad; rad; rad; rad; rad; N; N; N\n";
@@ -139,7 +139,7 @@ void NewCartImpController::starting(const ros::Time& /*time*/) {
   // ---------------------------------------------------------------------------
   std::string path_gains;
   double k1, k2, k3, k4, k5, k6, k7;
-  path_gains = "/home/helio/catkin_ws/src/TOOLING4G/franka_spacenav/gains/new_cart_imp_controller_gains";
+  path_gains = "/home/panda/catkin_ws/src/TOOLING4G/franka_spacenav/gains/new_cart_imp_controller_gains";
   infile_gains.open(path_gains);
   if(infile_gains.is_open()){
     infile_gains >> k1 >> k2 >> k3 >> k4 >> k5 >> k6 >> k7;
