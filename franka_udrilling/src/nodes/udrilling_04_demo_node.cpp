@@ -1,16 +1,16 @@
 // =============================================================================
 // Name        : udrilling_04_demo_node.cpp
 // Author      : Hélio Ochoa
-// Description : 0.4 mm
+// Description : 0.4 mm             
 // =============================================================================
 #include <franka_udrilling/udrilling_state.h>
 #include <tf/transform_broadcaster.h>
 #include <visualization_msgs/Marker.h>
 
 
-// =============================================================================
-//                              STATE MACHINE
-// =============================================================================
+////////////////////////////////////////////////////////////////////////////////
+// STATE MACHINE 
+////////////////////////////////////////////////////////////////////////////////
 #define MOVE2STATION 0
 #define MOVE2POINT 1
 #define PREDRILL 2
@@ -19,8 +19,7 @@
 #define DRILLDOWN 5
 #define NEXTPOINT 6
 #define INTERRUPT 7
-#define LUBRICATION 8
-// =============================================================================
+////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
 
@@ -28,14 +27,16 @@ int main(int argc, char **argv){
     ros::NodeHandle nh;
     franka_udrilling::uDrillingState panda(nh);
 
-    // =============================================================================
-    //                               tf broadcaster
+    ////////////////////////////////////////////////////////////////////////////////
+    // tf broadcaster
+    ////////////////////////////////////////////////////////////////////////////////
     tf::TransformBroadcaster station_br, pandaEEd_br, mould_br;
     tf::Transform station_tf, pandaEEd_tf, mould_tf;
+    
 
-
-    // =============================================================================
-    //                            VIZUALIZATION MARKERS
+    ////////////////////////////////////////////////////////////////////////////////
+    // VIZUALIZATION MARKERS
+    ////////////////////////////////////////////////////////////////////////////////
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 20);
     visualization_msgs::Marker points;
     points.header.frame_id = "/panda_link0";
@@ -58,8 +59,9 @@ int main(int argc, char **argv){
     points.color.b = 0.0;
 
 
-    // =============================================================================
-    //                      GET THE STATION POINT FROM FILE
+    ////////////////////////////////////////////////////////////////////////////////
+    // GET THE STATION POINT FROM FILE
+    ////////////////////////////////////////////////////////////////////////////////
     std::ifstream station_file;
     station_file.open("/home/panda/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/station");
 
@@ -93,8 +95,9 @@ int main(int argc, char **argv){
     // std::cout << Rd_station << std::endl;
 
 
-    // =============================================================================
-    //                   GET THE DESIRED ROTATION FROM FILE
+    ////////////////////////////////////////////////////////////////////////////////
+    // GET THE DESIRED ROTATION FROM FILE
+    ////////////////////////////////////////////////////////////////////////////////
     std::ifstream orientation_file;
     orientation_file.open("/home/panda/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_orientation");
 
@@ -118,8 +121,9 @@ int main(int argc, char **argv){
     // std::cout << Rd << std::endl;
 
 
-    // =============================================================================
-    //                        GET MOULD POINTS FROM FILE
+    ////////////////////////////////////////////////////////////////////////////////
+    // GET MOULD POINTS FROM FILE
+    ////////////////////////////////////////////////////////////////////////////////
     Eigen::MatrixXd P;  // matrix to save the mould points
     std::ifstream points_file;
     points_file.open("/home/panda/catkin_ws/src/TOOLING4G/franka_udrilling/co_manipulation_data/mould_points");
@@ -128,12 +132,12 @@ int main(int argc, char **argv){
     P.resize(3, n_points + 1);
     if(points_file.is_open()){
         while(points_file >> X >> Y >> Z){
-        // save the values in the matrix
-        P.conservativeResize(3, n_points + 1);
-        P(0, n_points) = X;
-        P(1, n_points) = Y;
-        P(2, n_points) = Z;
-        n_points++;
+            // save the values in the matrix
+            P.conservativeResize(3, n_points + 1);
+            P(0, n_points) = X;
+            P(1, n_points) = Y;
+            P(2, n_points) = Z;
+            n_points++;
         }
     }
     else{
@@ -154,17 +158,18 @@ int main(int argc, char **argv){
     }
 
 
-    // =============================================================================
-    //                            GET INITIAL POSE
+    ////////////////////////////////////////////////////////////////////////////////
+    // GET INITIAL POSE
+    ////////////////////////////////////////////////////////////////////////////////
     Eigen::Matrix4d O_T_EE;
     Eigen::VectorXd pose(7,1);
     O_T_EE = panda.O_T_EE;
     pose = panda.robotPose(O_T_EE);
+    
 
-
-    // =============================================================================
-    //                        TRAJECTORY TO FIRST POINT
-    // position
+    ////////////////////////////////////////////////////////////////////////////////
+    // TRAJECTORY TO FIRST POINT
+    ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d pi, pf;
     pi << pose[0], pose[1], pose[2];
     pf << S(0), S(1), pi(2);
@@ -179,40 +184,51 @@ int main(int argc, char **argv){
     of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
     double t1 = 0.0;
     double delta_t1 = delta_t/(tf-ti);
-
-    // move up
+    
+    // move up 
     Eigen::Vector3d delta_up;
     delta_up << 0.0, 0.0, 0.25;
 
 
-    // =============================================================================
-    //                     DRILLING TRAJECTORY CONDITIONS
-    Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;
-    delta_drill << 0.0, 0.0, 0.0005; // 0.001
-    delta_roof << 0.0, 0.0, 0.002;
-
-    delta_predrill << 0.0, 0.0, 0.005;
+    ////////////////////////////////////////////////////////////////////////////////
+    // DRILLING TRAJECTORY CONDITIONS
+    ////////////////////////////////////////////////////////////////////////////////
+    Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;;
+    delta_drill << 0.0, 0.0, 0.001; 
+    delta_roof << 0.0, 0.0, 0.002; 
+    
+    delta_predrill << 0.0, 0.0, 0.004;
     delta_point << 0.0, 0.0, 0.003;
 
-    delta_goal << 0.0, 0.0, 0.012;
-    delta_limit << 0.0, 0.0, 0.016;
-
-    Eigen::Vector3d p_roof, p_goal, p_limit, p_hole;
+    delta_goal << 0.0, 0.0, 0.012;  // 0.012
+    delta_limit << 0.0, 0.0, 0.016; // 0.016
+    
+    Eigen::Vector3d p_roof, p_goal, p_limit;
     p_roof.setZero();
     p_goal.setZero();
     p_limit.setZero();
-    p_hole.setZero();
+    
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // FORCE LIMIT CONDITIONS
+    ////////////////////////////////////////////////////////////////////////////////
+    double Fz_max = 8.0;
 
 
-    // =============================================================================
-    //                           FORCE LIMIT CONDITIONS
-    double Fz_max = 10.0;
-    // double Fz_min = 4.0;
+    ////////////////////////////////////////////////////////////////////////////////
+    // change compliance parameters
+    ////////////////////////////////////////////////////////////////////////////////
+    int systemRet = 0;
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
+    if(systemRet == -1){
+        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+    }   
 
 
-    // =============================================================================
-    //                                  MAIN LOOP
-    // =============================================================================
+    ////////////////////////////////////////////////////////////////////////////////
+    // MAIN LOOP
+    ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d position_d(pi);
     Eigen::Quaterniond orientation_d(oi);
 
@@ -221,30 +237,31 @@ int main(int argc, char **argv){
     int flag_interrupt_print = 0;
     int flag_station = 0;
     int flag_move2point = 0;
-    int flag_lubrication = 0;
+    int flag_force_limit = 0;
     int n_points_done = 0;
     double result = 0.0;
-
-    // change compliance parameters
-    int systemRet = 0;
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
-    if(systemRet == -1){
-        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-    }
-
     ros::Rate loop_rate(1000);
     while(ros::ok()){
 
-        switch (flag_drilling) { ////////////////////////////////////////////////////
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // Force Limit 
+        if( panda.K_F_ext_hat_K[2] > Fz_max ){
+            flag_force_limit = 1;
+        }
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            // ======================================================================
+        ////////////////////////////////////////////////////////////////////////////////
+        // switch
+        ////////////////////////////////////////////////////////////////////////////////
+        switch (flag_drilling) { 
+
+            ////////////////////////////////////////////////////////////////////////////////
             case MOVE2STATION:
                 if(flag_print == 0){
                     std::cout << CLEANWINDOW << "Robot is moving to the station to lubricate the drill..." << std::endl;
                     flag_print = 1;
                 }
-
+                
                 // << MOVE2STATION >>
                 if(flag_station == 0){
                     if( (t >= ti) && (t <= tf) ){
@@ -270,10 +287,10 @@ int main(int argc, char **argv){
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }
                     else if(t > tf){
-                    flag_station = 2;
-                    pi << position_d;
-                    pf << pi - Rd_station*delta_up;
-                    t = 0;  // reset time
+                        flag_station = 2;
+                        pi << position_d;
+                        pf << pi - Rd_station*delta_up;
+                        t = 0;  // reset time                        
                     }
                 }
                 // << UP >>
@@ -288,25 +305,18 @@ int main(int argc, char **argv){
                         pi << position_d;
                         pf << P(0, n_points_done), P(1, n_points_done), pi(2);
                         t = 0;  // reset time
-
-                        // change compliance parameters
-                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.5");
-                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.5");
-                        if(systemRet == -1){
-                            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                        }
                     }
                 }
                 t = t + delta_t;
 
-                // INTERRUPT
+                // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
                     flag_drilling = INTERRUPT;
                 }
 
                 break;
 
-            // ======================================================================
+            ////////////////////////////////////////////////////////////////////////////////
             case MOVE2POINT:
                 if(flag_print == 1){
                     std::cout << CLEANWINDOW << "Robot is moving to a mold point..." << std::endl;
@@ -317,7 +327,7 @@ int main(int argc, char **argv){
                 if(flag_move2point == 0){
                     ti = 0.0;
                     tf = 4.0;
-                    if( (t >= ti) && (t <= tf) ){
+                    if( (t >= ti) && (t <= tf) ){                        
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }
                     else if(t > tf){
@@ -344,37 +354,27 @@ int main(int argc, char **argv){
                         t1 = t1 + delta_t1;
                     }
                     else if(t > tf){
-                        if(flag_print == 2){
-                            std::cout << CLEANWINDOW << "ROBOT IS READY, PLEASE PRESS BUTTON <1> OF SPACENAV... " << std::endl;
-                            flag_print = 3;
-                        }
-                        if( (panda.spacenav_button_1 == 1) ){
-                            flag_drilling = PREDRILL;
-                            pi << position_d;
-                            pf << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
-                            pf << pf + Rd*delta_predrill;
-                            if(flag_lubrication == 1){
-                                pf << p_hole;
-                                flag_lubrication = 0;
-                            }
-                            t = 0;  // reset time
-                        }
+                        flag_drilling = PREDRILL;
+                        pi << position_d;
+                        pf << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
+                        pf << pf + Rd*delta_predrill;
+                        t = 0;  // reset time 
                     }
                 }
                 t = t + delta_t;
 
-                // INTERRUPT
+                // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
                     flag_drilling = INTERRUPT;
                 }
 
                 break;
 
-            // ======================================================================
-            case PREDRILL:
-                if(flag_print == 3){
+            ////////////////////////////////////////////////////////////////////////////////
+            case PREDRILL:     
+                if(flag_print == 2){
                     std::cout << CLEANWINDOW << "Robot is pre-drilling..." << std::endl;
-                    flag_print = 4;
+                    flag_print = 3;
                 }
 
                 // << PRE DRILL >>
@@ -393,51 +393,42 @@ int main(int argc, char **argv){
                     p_goal << p_goal + Rd*delta_goal;
                     p_limit << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                     p_limit << p_limit + Rd*delta_limit;
-                    t = 0;  // reset time
-
-                    // change compliance parameters
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
-                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
-                    if(systemRet == -1){
-                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                    }
-
+                    t = 0;  // reset time 
                 }
                 t = t + delta_t;
 
-                // INTERRUPT
+                // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
                     flag_drilling = INTERRUPT;
                 }
 
                 break;
 
-            // ======================================================================
+            ////////////////////////////////////////////////////////////////////////////////
             case DRILL:
-                if(flag_print == 4){
+                if(flag_print == 3){
                     std::cout << CLEANWINDOW << "HOLE Nº" << n_points_done << " | ROBOT IS DRILLING, IF YOU WOULD LIKE TO STOP PRESS SPACENAV BUTTON <2>! | Fz = " << panda.K_F_ext_hat_K[2] << std::endl;
-                    flag_print = 5;
+                    flag_print = 4;
                 }
 
-                ///////////////////////////////////////////////
-                //                 Force Limit
-                if( panda.K_F_ext_hat_K[2] > Fz_max ){
-                    pf << pi;
-                }
-                ///////////////////////////////////////////////
                 O_T_EE = panda.O_T_EE;
                 pose = panda.robotPose(O_T_EE);  // get current pose
                 result = pose(2) - p_goal(2);
                 if( result > 0.0 ){
-                // if( panda.K_F_ext_hat_K[2] > Fz_min ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 0.4;
+                    tf = 0.6;   // 0.6
                     if( (t >= ti) && (t <= tf) ){
-                        position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
+                        if(flag_force_limit == 1){
+                            position_d = pi;
+                        }
+                        else{
+                            position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
+                        }                
                     }
                     else if(t > tf){
                         flag_drilling = DRILLUP;
+                        flag_force_limit = 0;
                         pi << position_d;
                         pf << p_roof;
                         t = 0;  // reset time
@@ -454,16 +445,16 @@ int main(int argc, char **argv){
                     t = 0;
                 }
 
-                // INTERRUPT
+                // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
                     flag_drilling = INTERRUPT;
                 }
 
                 break;
 
-            // ======================================================================
+            ////////////////////////////////////////////////////////////////////////////////
             case DRILLUP:
-                // << DRILLUP >>
+                // << DRILLUP >> 
                 ti = 0.0;
                 tf = 0.5;
                 if( (t >= ti) && (t <= tf) ){
@@ -477,18 +468,18 @@ int main(int argc, char **argv){
                 }
                 t = t + delta_t;
 
-                // INTERRUPT
+                // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
                     flag_drilling = INTERRUPT;
                 }
 
                 break;
 
-            // ======================================================================
+            ////////////////////////////////////////////////////////////////////////////////
             case DRILLDOWN:
-                // << DRILLDOWN >>
-                ti = 3.0;   // 1.0
-                tf = 4.0;   // 2.0
+                // << DRILLDOWN >> 
+                ti = 1.0;
+                tf = 2.0; // aumentar
                 if( (t >= ti) && (t <= tf) ){
                     position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                 }
@@ -505,21 +496,21 @@ int main(int argc, char **argv){
                 }
                 t = t + delta_t;
 
-                // INTERRUPT
+                // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
                     flag_drilling = INTERRUPT;
                 }
 
                 break;
 
-            // ======================================================================
+            ////////////////////////////////////////////////////////////////////////////////
             case NEXTPOINT:
-                if(flag_print == 5){
+                if(flag_print == 4){
                     std::cout << CLEANWINDOW << "The hole is complete and the robot is moving up! | Fz(N): " << panda.K_F_ext_hat_K[2] << std::endl;
                     flag_print = 0;
                 }
 
-                // << NEXTPOINT >>
+                // << UP >> 
                 ti = 0.0;
                 tf = 4.0;
                 if( (t >= ti) && (t <= tf) ){
@@ -550,78 +541,48 @@ int main(int argc, char **argv){
                     oi.coeffs() << orientation_d.coeffs();
                     of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
                     t1 = 0.0; // reset orientation time
+
                 }
                 t = t + delta_t;
 
-                // INTERRUPT
+                // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
                 flag_drilling = INTERRUPT;
                 }
 
                 break;
 
-            // ======================================================================
+            ////////////////////////////////////////////////////////////////////////////////
             case INTERRUPT:
                 if(flag_interrupt_print == 0){
-                    std::cout << CLEANWINDOW << "PROGRAM INTERRUPTED! If you would like to lubricate the drill please press spacenav button <1>..." << std::endl;
+                    std::cout << CLEANWINDOW << "PROGRAM INTERRUPTED! If you would like to continue please press spacenav button <1>..." << std::endl;
                     flag_interrupt_print = 1;
                 }
 
-                else if(panda.spacenav_button_1 == 1){
-                    flag_drilling = LUBRICATION;
+                if(panda.spacenav_button_1 == 1){
+                    flag_drilling = NEXTPOINT;
+                    flag_interrupt_print = 0;
+                    flag_print = 4;
                     O_T_EE = panda.O_T_EE;
                     pose = panda.robotPose(O_T_EE);  // get current pose
                     pi << pose[0], pose[1], pose[2];
                     delta_up << 0.0, 0.0, 0.15;
                     pf << pi - Rd*delta_up;
                     t = 0;
-                    flag_interrupt_print = 0;
-
-                    // update p_hole
-                    p_hole << pose[0], pose[1], pose[2];
-                    delta_drill << 0.0, 0.0, 0.002;
-                    flag_lubrication = 1;
                 }
 
                 break;
 
-            // ======================================================================
-            case LUBRICATION:
-                // << LUBRICATION >>
-                ti = 0.0;
-                tf = 4.0;
-                if( (t >= ti) && (t <= tf) ){
-                    position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
-                }
-                else if(t > tf){
-                    flag_drilling = MOVE2STATION;
-                    flag_station = 0;
-                    flag_move2point = 0;
-                    flag_print = 0;
-                    pi << position_d;
-                    pf << S(0), S(1), pi[2];
-                    delta_up << 0.0, 0.0, 0.25;
-                    ti = 0.0;
-                    tf = 4.0;
-                    delta_t1 = delta_t/(tf-ti);
-                    t = 0;  // reset time
-                    oi.coeffs() << orientation_d.coeffs();
-                    of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
-                    t1 = 0.0; // reset orientation time
-                }
-                t = t + delta_t;
-
-                break;
-
-        } ///////////////////////////////////////////////////////////////////////////
-
-
+        }
+        ////////////////////////////////////////////////////////////////////////////////
+             
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
         panda.posePublisherCallback(position_d, orientation_d);
 
-        // ===========================================================================
-        //                     TF AND VISUALIZATION MARKERS
+        ////////////////////////////////////////////////////////////////////////////////
+        // TF AND VISUALIZATION MARKERS
+        ////////////////////////////////////////////////////////////////////////////////
         // Draw the station tf
         station_tf.setOrigin( tf::Vector3(S(0), S(1), S(2)) );
         station_tf.setRotation( tf::Quaternion(Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w()) );
@@ -638,16 +599,17 @@ int main(int argc, char **argv){
         mould_br.sendTransform(tf::StampedTransform(mould_tf, ros::Time::now(), "/panda_link0", "/mold"));
 
         // Draw the points
-        marker_pub.publish(points);
+        marker_pub.publish(points);  
+        ////////////////////////////////////////////////////////////////////////////////
 
-
-        // ============================================================================
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
             break;
 
         ros::spinOnce();
         loop_rate.sleep();
     }
+    ////////////////////////////////////////////////////////////////////////////////
 
     return 0;
 }
+
