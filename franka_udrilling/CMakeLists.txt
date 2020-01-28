@@ -104,7 +104,6 @@ catkin_package(
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/training_mode.cpp
-  src/cartesian_impedance_controller.cpp
   src/spacenav.cpp
   src/co_manipulation_mode.cpp
   src/udrilling_controller.cpp

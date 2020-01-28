@@ -8,8 +8,11 @@ CartesianImpedanceController::CartesianImpedanceController(){
   std::string tracking_path;
   tracking_path = "/home/panda/kst/franka/cartesian_impedance_controller";
   file_tracking.open(tracking_path, std::ofstream::out);
-  file_tracking << " t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz Qx Qx_d Qy Qy_d Qz Qz_d Qw Qw_d\n";
-  file_tracking << " s m m m m m m rad rad rad rad rad rad N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad Qunit Qunit Qunit Qunit Qunit Qunit Qunit Qunit\n";
+  // file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) Fx_EE Fy_EE Fz_EE Fx_O Fy_O Fz_O e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz Qx Qx_d Qy Qy_d Qz Qz_d Qw Qw_d\n";
+  // file_tracking << "s m m m m m m rad rad rad rad rad rad N N N N N N m m m rad rad rad m m m m m m m m m rad rad rad Qunit Qunit Qunit Qunit Qunit Qunit Qunit Qunit\n";
+
+  file_tracking << "t Fx Fy Fz\n";
+  file_tracking << "s N N N\n";
 }
 
 CartesianImpedanceController::~CartesianImpedanceController(){
@@ -342,44 +345,35 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/, const ros::
   Eigen::Vector3d euler_angles(R2EulerAngles(R)); // XYZ
   Eigen::Vector3d euler_angles_d_(R2EulerAngles(R_d_)); // XYZ
 
-  Eigen::Vector3d position_EE(R*position); // current position in EE frame
-  Eigen::Vector3d position_EE_d_(R_d_*position_d_); // current position in EE frame
+  Eigen::Vector3d position_EE(R.transpose() * position); // current position in EE frame
+  Eigen::Vector3d position_EE_d_(R_d_.transpose() * position_d_); // current position in EE frame
 
   count++;
   double TIME = count/1000.0;
-  file_tracking << " " << TIME << " "
-                << position[0] << " " << position_d_[0] << " "
-                << position[1] << " " << position_d_[1] << " "
-                << position[2] << " " << position_d_[2] << " "
-                << wrapToPI(euler_angles[0]) << " " << wrapToPI(euler_angles_d_[0]) << " "
-                << wrapToPI(euler_angles[1]) << " " << wrapToPI(euler_angles_d_[1]) << " "
-                << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
-                << EE_force[0] << " "
-                << EE_force[1] << " "
-                << EE_force[2] << " "
-                << O_force[0] << " "
-                << O_force[1] << " "
-                << O_force[2] << " "
-                << error[0] << " "
-                << error[1] << " "
-                << error[2] << " "
-                << error[3] << " "
-                << error[4] << " "
-                << error[5] << " "
-                << position_EE[0] << " " << position_EE_d_[0] << " "
-                << position_EE[1] << " " << position_EE_d_[1] << " "
-                << position_EE[2] << " " << position_EE_d_[2] << " "
-                << integral_error[0] << " "
-                << integral_error[1] << " "
-                << integral_error[2] << " "
-                << integral_error[3] << " "
-                << integral_error[4] << " "
-                << integral_error[5] << " "
-                << Quaternion.vec()[0] << " " << Quaternion_d_.vec()[0] << " "
-                << Quaternion.vec()[1] << " " << Quaternion_d_.vec()[1] << " "
-                << Quaternion.vec()[2] << " " << Quaternion_d_.vec()[2] << " "
-                << Quaternion.w() << " " << Quaternion_d_.w() << "\n";
 
+  // file_tracking << TIME << " "
+  //               << position[0] << " " << position_d_[0] << " "
+  //               << position[1] << " " << position_d_[1] << " "
+  //               << position[2] << " " << position_d_[2] << " "
+  //               << wrapToPI(euler_angles[0]) << " " << wrapToPI(euler_angles_d_[0]) << " "
+  //               << wrapToPI(euler_angles[1]) << " " << wrapToPI(euler_angles_d_[1]) << " "
+  //               << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
+  //               << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << " "
+  //               << O_force[0] << " " << O_force[1] << " " << O_force[2] << " "
+  //               << error[0] << " " << error[1] << " " << error[2] << " "
+  //               << error[3] << " " << error[4] << " " << error[5] << " "
+  //               << position_EE[0] << " " << position_EE_d_[0] << " "
+  //               << position_EE[1] << " " << position_EE_d_[1] << " "
+  //               << position_EE[2] << " " << position_EE_d_[2] << " "
+  //               << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
+  //               << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
+  //               << Quaternion.vec()[0] << " " << Quaternion_d_.vec()[0] << " "
+  //               << Quaternion.vec()[1] << " " << Quaternion_d_.vec()[1] << " "
+  //               << Quaternion.vec()[2] << " " << Quaternion_d_.vec()[2] << " "
+  //               << Quaternion.w() << " " << Quaternion_d_.w() << "\n";
+
+  file_tracking << TIME << " "
+                << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << "\n";
 
 }
 
