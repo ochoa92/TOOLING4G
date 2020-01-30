@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="udrilling_tool">
+  <xacro:macro name="udrilling_tool" params="connected_to:='' ns:='' rpy:='0 0 0' xyz:='0 0 0' ">
+    <xacro:unless value="${connected_to == ''}">
+      <joint name="${ns}_udrilling_tool_joint" type="fixed">
+        <parent link="${connected_to}"/>
+        <child link="${ns}_udrilling_tool"/>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+      </joint>
+    </xacro:unless>
+    <link name="${ns}_udrilling_tool">
+      <visual>
+        <geometry>
+          <mesh filename="package://franka_description/meshes/visual/udrilling_tool.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://franka_description/meshes/collision/udrilling_tool.stl"/>
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+</robot>

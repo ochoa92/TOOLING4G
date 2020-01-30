@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="udrilling_tool">
+  <xacro:include filename="udrilling_tool.xacro"/>
+  <xacro:udrilling_tool ns="panda"/>
+</robot>
