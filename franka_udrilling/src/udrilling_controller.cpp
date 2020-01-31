@@ -2,7 +2,7 @@
 
 namespace franka_udrilling {
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 uDrillingController::uDrillingController(){
     std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
     tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
@@ -14,13 +14,13 @@ uDrillingController::uDrillingController(){
     tracking_file << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad N N N N N N\n";
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 uDrillingController::~uDrillingController(){
     std::cout << "\nTracking file closed!" << std::endl << std::endl;
     tracking_file.close();
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle){
 
     std::string arm_id;
@@ -130,7 +130,7 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     return true;
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 void uDrillingController::starting(const ros::Time& /*time*/){
 
     // compute initial velocity with jacobian and set x_attractor to initial configuration
@@ -157,7 +157,7 @@ void uDrillingController::starting(const ros::Time& /*time*/){
 
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/) {
 
     // get state variables
@@ -375,7 +375,7 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
 
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 Eigen::Matrix<double, 7, 1> uDrillingController::saturateTorqueRate(const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
                                                                     const Eigen::Matrix<double, 7, 1>& tau_J_d){  // NOLINT (readability-identifier-naming)
     Eigen::Matrix<double, 7, 1> tau_d_saturated{};
@@ -386,7 +386,7 @@ Eigen::Matrix<double, 7, 1> uDrillingController::saturateTorqueRate(const Eigen:
     return tau_d_saturated;
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 Eigen::Vector3d uDrillingController::R2r(Eigen::Matrix3d& Rotation){
     Eigen::Vector3d aux, rotation_vector;
     aux << Rotation(2,1) - Rotation(1,2),
@@ -396,13 +396,13 @@ Eigen::Vector3d uDrillingController::R2r(Eigen::Matrix3d& Rotation){
     return rotation_vector;
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 double uDrillingController::wrapToPI(double& angle){
     double new_angle = atan2(sin(angle), cos(angle));
     return new_angle;
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 double uDrillingController::wrapTo2PI(double& angle){
     double new_angle = asin(sin(angle));
     if(cos(angle) < 0){
@@ -414,7 +414,7 @@ double uDrillingController::wrapTo2PI(double& angle){
     return new_angle;
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 double uDrillingController::derivative_computation( const double q_i, const double maxJointLimit_i, const double minJointLimit_i){
     double result;
     double average_joint;
@@ -424,7 +424,7 @@ double uDrillingController::derivative_computation( const double q_i, const doub
     return result;
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 template<int N> // number of joints or DOF
 void uDrillingController::gradient_mechanical_joint_limit( Eigen::Matrix<double, N, 1>& gradient_mechanical_joint_limit_out, const Eigen::Matrix<double, N, 1> q, const Eigen::Matrix<double, N, 1> maxJointLimits, const Eigen::Matrix<double, N, 1> minJointLimits ){
     for ( int i = 0; i < q.rows(); i++ ){
@@ -432,7 +432,7 @@ void uDrillingController::gradient_mechanical_joint_limit( Eigen::Matrix<double,
     }
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 void uDrillingController::equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
 
     position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
@@ -445,7 +445,7 @@ void uDrillingController::equilibriumPoseCallback(const geometry_msgs::PoseStamp
 
 }
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////
 void uDrillingController::complianceParamCallback(franka_udrilling::compliance_paramConfig& config, uint32_t /*level*/){
 
     // position stiffness in desired frame
@@ -491,7 +491,7 @@ void uDrillingController::complianceParamCallback(franka_udrilling::compliance_p
 
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
 void uDrillingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation){
 
     geometry_msgs::PoseStamped robot_pose;
@@ -512,7 +512,7 @@ void uDrillingController::posePublisherCallback(ros::Publisher& pose_pub, Eigen:
 
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
 void uDrillingController::errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error){
 
     geometry_msgs::Twist robot_error;

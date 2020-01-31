@@ -194,14 +194,14 @@ int main(int argc, char **argv){
     // DRILLING TRAJECTORY CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;;
-    delta_drill << 0.0, 0.0, 0.001; 
+    delta_drill << 0.0, 0.0, 0.00025; 
     delta_roof << 0.0, 0.0, 0.002; 
     
-    delta_predrill << 0.0, 0.0, 0.004;
+    delta_predrill << 0.0, 0.0, 0.002;
     delta_point << 0.0, 0.0, 0.003;
 
-    delta_goal << 0.0, 0.0, 0.012;  // 0.012
-    delta_limit << 0.0, 0.0, 0.016; // 0.016
+    delta_goal << 0.0, 0.0, 0.008;  // 0.012
+    delta_limit << 0.0, 0.0, 0.010; // 0.016
     
     Eigen::Vector3d p_roof, p_goal, p_limit;
     p_roof.setZero();
@@ -219,8 +219,8 @@ int main(int argc, char **argv){
     // change compliance parameters
     ////////////////////////////////////////////////////////////////////////////////
     int systemRet = 0;
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1400.0");
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
     if(systemRet == -1){
         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
     }   
@@ -260,6 +260,19 @@ int main(int argc, char **argv){
                 if(flag_print == 0){
                     std::cout << CLEANWINDOW << "Robot is moving to the station to lubricate the drill..." << std::endl;
                     flag_print = 1;
+
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    // turn ON integral
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.5");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.5");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.5");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Iox 0.01");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioy 0.01");
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.01");
+                    if(systemRet == -1){
+                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    }   
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 }
                 
                 // << MOVE2STATION >>
@@ -359,6 +372,23 @@ int main(int argc, char **argv){
                         pf << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                         pf << pf + Rd*delta_predrill;
                         t = 0;  // reset time 
+
+                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // turn OFF integral
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipy 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Iox 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioy 0.0");
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.0");                          
+                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // turn ON external torque
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 1");
+                        if(systemRet == -1){
+                            std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                        }     
+                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   
+
                     }
                 }
                 t = t + delta_t;
@@ -417,7 +447,7 @@ int main(int argc, char **argv){
                 if( result > 0.0 ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 0.6;   // 0.6
+                    tf = 0.5;   // 0.6
                     if( (t >= ti) && (t <= tf) ){
                         if(flag_force_limit == 1){
                             position_d = pi;
@@ -542,12 +572,20 @@ int main(int argc, char **argv){
                     of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
                     t1 = 0.0; // reset orientation time
 
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    // turn OFF external torque
+                    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 0");
+                    if(systemRet == -1){
+                        std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+                    } 
+                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                 }
                 t = t + delta_t;
 
                 // << INTERRUPT >>
                 if(panda.spacenav_button_2 == 1){
-                flag_drilling = INTERRUPT;
+                    flag_drilling = INTERRUPT;
                 }
 
                 break;

@@ -195,14 +195,14 @@ int main(int argc, char **argv){
     // DRILLING TRAJECTORY CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;;
-    delta_drill << 0.0, 0.0, 0.001; 
+    delta_drill << 0.0, 0.0, 0.0005; // 0.001 
     delta_roof << 0.0, 0.0, 0.002; 
     
     delta_predrill << 0.0, 0.0, 0.002;
     delta_point << 0.0, 0.0, 0.003;
 
-    delta_goal << 0.0, 0.0, 0.08;  // 0.012
-    delta_limit << 0.0, 0.0, 0.010; // 0.016
+    delta_goal << 0.0, 0.0, 0.008;  // 0.010
+    delta_limit << 0.0, 0.0, 0.010; // 0.012
     
     Eigen::Vector3d p_roof, p_goal, p_limit;
     p_roof.setZero();
@@ -214,8 +214,7 @@ int main(int argc, char **argv){
     // FORCE LIMIT CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
     double Fz_max = 12.0;
-    // double Fz_min = 4.0;
-
+   
 
     ////////////////////////////////////////////////////////////////////////////////
     // SELECT DRILL LOOP
@@ -242,8 +241,8 @@ int main(int argc, char **argv){
             }
             
             // change compliance parameters
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1400.0");
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 70.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
@@ -263,12 +262,13 @@ int main(int argc, char **argv){
             }
             
             // change compliance parameters
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 10.0;  
+            Fz_max = 10.0;
+            delta_drill << 0.0, 0.0, 0.00025;  
             select_drill = 1;
 
             break;
@@ -290,7 +290,7 @@ int main(int argc, char **argv){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
             Fz_max = 8.0;
-            delta_drill << 0.0, 0.0, 0.0005;
+            delta_drill << 0.0, 0.0, 0.0002;
             select_drill = 1;
 
             break;
@@ -307,6 +307,7 @@ int main(int argc, char **argv){
     ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d position_d(pi);
     Eigen::Quaterniond orientation_d(oi);
+    Eigen::Vector3d last_position_d(position_d);
 
     int flag_drilling = 0;
     int flag_print = 0;
@@ -528,6 +529,7 @@ int main(int argc, char **argv){
                     tf = 0.6;   // 0.6
                     if( (t >= ti) && (t <= tf) ){
                         if(flag_force_limit == 1){
+                            // position_d = last_position_d;
                             position_d = pi;
                         }
                         else{
@@ -695,6 +697,9 @@ int main(int argc, char **argv){
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
         panda.posePublisherCallback(position_d, orientation_d);
+
+        // update last_position_d
+        last_position_d = position_d;
 
         ////////////////////////////////////////////////////////////////////////////////
         // TF AND VISUALIZATION MARKERS
