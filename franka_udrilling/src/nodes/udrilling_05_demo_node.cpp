@@ -85,10 +85,10 @@ int main(int argc, char **argv){
     points.points.push_back(p_station);
 
     Eigen::Quaterniond Qd_station;  // station desired Quaternion
-    Qd_station.vec()[0] = -0.69101;
-    Qd_station.vec()[1] = 0.722788;
-    Qd_station.vec()[2] = 0.0059565;
-    Qd_station.w() = -0.00688607;
+    Qd_station.vec()[0] = -0.688736;
+    Qd_station.vec()[1] = 0.724965;
+    Qd_station.vec()[2] = 0.00264807;
+    Qd_station.w() = -0.0078517;
     // std::cout << Qd.coeffs() << std::endl;
 
     Eigen::Matrix3d Rd_station(Qd_station); // station desired Rotation
@@ -195,13 +195,13 @@ int main(int argc, char **argv){
     ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;;
     delta_drill << 0.0, 0.0, 0.00025; 
-    delta_roof << 0.0, 0.0, 0.002; 
+    delta_roof << 0.0, 0.0, 0.0015; 
     
-    delta_predrill << 0.0, 0.0, 0.002;
+    delta_predrill << 0.0, 0.0, 0.0015;
     delta_point << 0.0, 0.0, 0.003;
 
-    delta_goal << 0.0, 0.0, 0.008;  // 0.012
-    delta_limit << 0.0, 0.0, 0.010; // 0.016
+    delta_goal << 0.0, 0.0, 0.012;  // 0.012
+    delta_limit << 0.0, 0.0, 0.014; // 0.016
     
     Eigen::Vector3d p_roof, p_goal, p_limit;
     p_roof.setZero();
@@ -212,15 +212,15 @@ int main(int argc, char **argv){
     ////////////////////////////////////////////////////////////////////////////////
     // FORCE LIMIT CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
-    double Fz_max = 10.0;
+    double Fz_max = 8.0;
 
 
     ////////////////////////////////////////////////////////////////////////////////
     // change compliance parameters
     ////////////////////////////////////////////////////////////////////////////////
     int systemRet = 0;
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
-    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1100.0");
+    systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 55.0");
     if(systemRet == -1){
         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
     }   
@@ -231,6 +231,7 @@ int main(int argc, char **argv){
     ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d position_d(pi);
     Eigen::Quaterniond orientation_d(oi);
+    Eigen::Vector3d last_position_d(position_d);
 
     int flag_drilling = 0;
     int flag_print = 0;
@@ -451,6 +452,7 @@ int main(int argc, char **argv){
                     if( (t >= ti) && (t <= tf) ){
                         if(flag_force_limit == 1){
                             position_d = pi;
+                            // position_d = last_position_d;
                         }
                         else{
                             position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
@@ -509,7 +511,7 @@ int main(int argc, char **argv){
             case DRILLDOWN:
                 // << DRILLDOWN >> 
                 ti = 1.0;
-                tf = 2.0; // aumentar
+                tf = 2.5; // aumentar
                 if( (t >= ti) && (t <= tf) ){
                     position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                 }
@@ -617,6 +619,9 @@ int main(int argc, char **argv){
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
         panda.posePublisherCallback(position_d, orientation_d);
+
+        // update last_position_d
+        last_position_d = position_d;
 
         ////////////////////////////////////////////////////////////////////////////////
         // TF AND VISUALIZATION MARKERS

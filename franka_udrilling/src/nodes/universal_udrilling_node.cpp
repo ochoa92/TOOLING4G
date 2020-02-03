@@ -86,10 +86,10 @@ int main(int argc, char **argv){
     points.points.push_back(p_station);
 
     Eigen::Quaterniond Qd_station;  // station desired Quaternion
-    Qd_station.vec()[0] = -0.69101;
-    Qd_station.vec()[1] = 0.722788;
-    Qd_station.vec()[2] = 0.0059565;
-    Qd_station.w() = -0.00688607;
+    Qd_station.vec()[0] = -0.688736;
+    Qd_station.vec()[1] = 0.724965;
+    Qd_station.vec()[2] = 0.00264807;
+    Qd_station.w() = -0.0078517;
     // std::cout << Qd.coeffs() << std::endl;
 
     Eigen::Matrix3d Rd_station(Qd_station); // station desired Rotation
@@ -267,7 +267,7 @@ int main(int argc, char **argv){
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 10.0;
+            Fz_max = 8.0;
             delta_drill << 0.0, 0.0, 0.00025;  
             select_drill = 1;
 
@@ -529,8 +529,8 @@ int main(int argc, char **argv){
                     tf = 0.6;   // 0.6
                     if( (t >= ti) && (t <= tf) ){
                         if(flag_force_limit == 1){
-                            // position_d = last_position_d;
-                            position_d = pi;
+                            position_d = last_position_d;
+                            // position_d = pi;
                         }
                         else{
                             position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);

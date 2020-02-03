@@ -85,10 +85,10 @@ int main(int argc, char **argv){
     points.points.push_back(p_station);
 
     Eigen::Quaterniond Qd_station;  // station desired Quaternion
-    Qd_station.vec()[0] = -0.69101;
-    Qd_station.vec()[1] = 0.722788;
-    Qd_station.vec()[2] = 0.0059565;
-    Qd_station.w() = -0.00688607;
+    Qd_station.vec()[0] = -0.688736;
+    Qd_station.vec()[1] = 0.724965;
+    Qd_station.vec()[2] = 0.00264807;
+    Qd_station.w() = -0.0078517;
     // std::cout << Qd.coeffs() << std::endl;
 
     Eigen::Matrix3d Rd_station(Qd_station); // station desired Rotation
