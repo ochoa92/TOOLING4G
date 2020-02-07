@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.4)
 project(franka_gripper)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
 )
 
-find_package(Franka 0.5.0 REQUIRED)
+find_package(Franka 0.7.0 REQUIRED)
 
 add_action_files(
   DIRECTORY action
