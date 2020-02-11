@@ -216,8 +216,9 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     error.head(3) << position_d_ - position;
 
     // orientation error
-    Eigen::Matrix3d cRcd(R.inverse() * R_d_); // described in current end-effector frame
-    Eigen::Matrix3d Rcd(R * cRcd * R.inverse()); // described in the base frame
+    // Eigen::Matrix3d cRcd(R.inverse() * R_d_); // described in current end-effector frame
+    // Eigen::Matrix3d Rcd(R * cRcd * R.inverse()); // described in the base frame
+    Eigen::Matrix3d Rcd(R_d_ * R.inverse()); // described in the base frame
     error.tail(3) << R2r(Rcd);
 
     // velocity error

@@ -195,14 +195,14 @@ int main(int argc, char **argv){
     // DRILLING TRAJECTORY CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;;
-    delta_drill << 0.0, 0.0, 0.0005; // 0.001 
-    delta_roof << 0.0, 0.0, 0.002; 
+    delta_drill << 0.0, 0.0, 0.001; 
+    delta_roof << 0.0, 0.0, 0.0015; 
     
     delta_predrill << 0.0, 0.0, 0.002;
     delta_point << 0.0, 0.0, 0.003;
 
-    delta_goal << 0.0, 0.0, 0.008;  // 0.010
-    delta_limit << 0.0, 0.0, 0.010; // 0.012
+    delta_goal << 0.0, 0.0, 0.010;  // 0.008
+    delta_limit << 0.0, 0.0, 0.012; // 0.010
     
     Eigen::Vector3d p_roof, p_goal, p_limit;
     p_roof.setZero();
@@ -213,7 +213,7 @@ int main(int argc, char **argv){
     ////////////////////////////////////////////////////////////////////////////////
     // FORCE LIMIT CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
-    double Fz_max = 12.0;
+    double Fz_max = 15.0;
    
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -246,7 +246,8 @@ int main(int argc, char **argv){
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 12.0;
+            // Fz_max = 12.0;
+            delta_drill << 0.0, 0.0, 0.0007;
             select_drill = 1;
 
             break;
@@ -262,12 +263,12 @@ int main(int argc, char **argv){
             }
             
             // change compliance parameters
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1100.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 55.0");
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 8.0;
+            Fz_max = 12.0;
             delta_drill << 0.0, 0.0, 0.00025;  
             select_drill = 1;
 
@@ -284,13 +285,13 @@ int main(int argc, char **argv){
             }
             
             // change compliance parameters
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 900.0");
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 45.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 8.0;
-            delta_drill << 0.0, 0.0, 0.0002;
+            Fz_max = 10.0;
+            delta_drill << 0.0, 0.0, 0.00015;
             select_drill = 1;
 
             break;
@@ -526,7 +527,7 @@ int main(int argc, char **argv){
                 if( result > 0.0 ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 0.6;   // 0.6
+                    tf = 0.5;   // 0.6
                     if( (t >= ti) && (t <= tf) ){
                         if(flag_force_limit == 1){
                             position_d = last_position_d;
@@ -589,7 +590,7 @@ int main(int argc, char **argv){
             case DRILLDOWN:
                 // << DRILLDOWN >> 
                 ti = 1.0;
-                tf = 2.0; // aumentar
+                tf = 2.5; // aumentar
                 if( (t >= ti) && (t <= tf) ){
                     position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                 }

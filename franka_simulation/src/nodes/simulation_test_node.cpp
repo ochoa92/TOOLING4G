@@ -1,7 +1,7 @@
 // =============================================================================
 // Name        : simulation_test_node.cpp
 // Author      : Hélio Ochoa
-// Description : 
+// Description :
 // =============================================================================
 #include <franka_simulation/spacenav.h>
 #include <tf/transform_broadcaster.h>
@@ -19,14 +19,14 @@ int main(int argc, char **argv){
     O_T_EE = panda.O_T_EE;
     Eigen::VectorXd pose(7,1);
     pose = panda.robotPose(O_T_EE);
-    
+
     // ---------------------------------------------------------------------------
     // polynomial3Trajectory initial conditions
     // ---------------------------------------------------------------------------
     Eigen::Vector3d pi;
     pi << pose[0], pose[1], pose[2];
     Eigen::Vector3d delta_p;
-    delta_p << 0.0, 0.0, 0.1; 
+    delta_p << 0.0, 0.0, 0.1;
     Eigen::Vector3d pf;
     pf << pi + delta_p;
     double ti = 3.0;
@@ -98,7 +98,7 @@ int main(int argc, char **argv){
         // std::cout << CLEANWINDOW << "\npd:\n" << pd << std::endl;
         // std::cout << CLEANWINDOW << "\nod:\n" << od.vec() << "\n" << od.w() << std::endl;
         panda.posePublisherCallback(pd, od);
-                
+
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
             break;
 
