@@ -246,8 +246,8 @@ int main(int argc, char **argv){
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            // Fz_max = 12.0;
-            delta_drill << 0.0, 0.0, 0.0007;
+            Fz_max = 12.0;
+            delta_drill << 0.0, 0.0, 0.001;
             select_drill = 1;
 
             break;
@@ -268,8 +268,8 @@ int main(int argc, char **argv){
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 12.0;
-            delta_drill << 0.0, 0.0, 0.00025;  
+            Fz_max = 10.0;
+            delta_drill << 0.0, 0.0, 0.0005;  
             select_drill = 1;
 
             break;
@@ -290,8 +290,8 @@ int main(int argc, char **argv){
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 10.0;
-            delta_drill << 0.0, 0.0, 0.00015;
+            Fz_max = 8.0;
+            delta_drill << 0.0, 0.0, 0.00025;
             select_drill = 1;
 
             break;
@@ -527,7 +527,7 @@ int main(int argc, char **argv){
                 if( result > 0.0 ){
                     // << DRILL >>
                     ti = 0.0;
-                    tf = 0.5;   // 0.6
+                    tf = 0.5;
                     if( (t >= ti) && (t <= tf) ){
                         if(flag_force_limit == 1){
                             position_d = last_position_d;

@@ -23,6 +23,6 @@
   <include file="$(find spacenav_node)/launch/classic.launch" />
 
   <!-- To run a node -->
-  <!-- <node name="universal_udrilling_node" pkg="franka_udrilling" type="universal_udrilling_node" required="true" output="screen" /> -->
+  <!-- <node name="udrilling_controller_data" pkg="franka_udrilling" type="udrilling_controller_data.py" required="true" output="screen" /> -->
 
 </launch>

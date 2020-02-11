@@ -2,14 +2,14 @@
 
 import rospy
 import numpy as np
-import array as arr
-from matplotlib import pyplot
-from scipy import signal
+import sys
 
-from franka_msgs.msg import FrankaState
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Twist
 
-class Franka(object):
+robot_state_flag = False
+
+class udrilling_state(object):
     def __init__(self):
         self.position = None
         self.orientation = None
@@ -17,25 +17,22 @@ class Franka(object):
         self.position_d = None
         self.orientation_d = None
 
-        self.EE_force = None
+        self.error = None
+
+        self.ee_wrench = None
         
-        self.state_sub = rospy.Subscriber("/franka_state_controller/franka_states", FrankaState, self.franka_state_callback)
-        self.pose_sub = rospy.Subscriber("/robot_poseEE", PoseStamped, self.pose_sub_callback)
-        self.pose_d_sub = rospy.Subscriber("/robot_poseEE_d", PoseStamped, self.pose_sub_d_callback)
+        # subscribers
+        self.pose_sub = rospy.Subscriber("/robot_poseEE", PoseStamped, self.pose_subCallback)
+        self.pose_d_sub = rospy.Subscriber("/robot_poseEE_d", PoseStamped, self.pose_d_subCallback)
+        self.error_sub = rospy.Subscriber("/robot_error", Twist, self.error_subCallback)
+        self.ee_wrench_sub = rospy.Subscriber("/robot_wrench", Twist, self.ee_wrench_subCallback)
 
-    def franka_state_callback(self, msg):
-        self.EE_force = [msg.K_F_ext_hat_K[0], msg.K_F_ext_hat_K[1], msg.K_F_ext_hat_K[2]]
 
-    def franka_EE_force(self):
-        if (self.EE_force) is None:
-            rospy.logwarn("\nFranka End-Effector haven't been filled yet.")
-            return None
-        else:
-            return self.EE_force
-
-    def pose_sub_callback(self, msg):
+    def pose_subCallback(self, msg):
         self.position = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
         self.orientation = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+        global robot_state_flag
+        robot_state_flag = True
 
     def robot_pose(self):
         if (self.position or self.orientation) is None:
@@ -44,7 +41,7 @@ class Franka(object):
         else:
             return self.position, self.orientation
 
-    def pose_sub_d_callback(self, msg):
+    def pose_d_subCallback(self, msg):
         self.position_d = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
         self.orientation_d = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
 
@@ -55,34 +52,61 @@ class Franka(object):
         else:
             return self.position_d, self.orientation_d
 
+    def error_subCallback(self, msg):
+        self.error = [msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z]
+
+    def robot_error(self):
+        if (self.error) is None:
+            rospy.logwarn("\nRobot error haven't been filled yet.")
+            return None
+        else:
+            return self.error
+
+    def ee_wrench_subCallback(self, msg):
+        self.ee_wrench = [msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z]
+
+    def robot_wrench(self):
+        if (self.ee_wrench) is None:
+            rospy.logwarn("\nRobot wrench haven't been filled yet.")
+            return None
+        else:
+            return self.ee_wrench
 
 if __name__ == "__main__":
-    rospy.init_node("franka_states_node")
+    rospy.init_node("udrilling_controller_data")
 
-    robot = Franka()
-    rospy.sleep(1)
-
-    
+    robot = udrilling_state()
+    rate = rospy.Rate(1000) # 1000 Hz
+    while not robot_state_flag:
+        rospy.sleep(1)
+        rate.sleep()
+  
+    # ==========================================================================
+    # KST FILE
+    # ==========================================================================
+    path = '/home/panda/kst/udrilling/udrilling_controller'
+    file = open(path, "w")
+    line1 = ['t ',
+             'px ', 'py ', 'pz ',
+             'pxd ', 'pyd ', 'pzd ',
+             'ox ', 'oy ', 'oz ', 'ow ',
+             'oxd ', 'oyd ', 'ozd ', 'owd ',
+             'epx ', 'epy ', 'epz ', 'eox ', 'eoy ', 'eoz ',
+             'Fx ', 'Fy ', 'Fz ', '\n']
+    line2 = ['s ',
+             'm ', 'm ', 'm ',
+             'm ', 'm ', 'm ',
+             'unitQ ', 'unitQ ', 'unitQ ', 'unitQ ',
+             'unitQ ', 'unitQ ', 'unitQ ', 'unitQ ',
+             'm ', 'm ', 'm ', 'rad ', 'rad ', 'rad ',
+             'N ', 'N ', 'N ', '\n']
+    file.writelines(line1)
+    file.writelines(line2)
 
     # ==========================================================================
     # main loop
     # ==========================================================================
-    
-    # plot init values    
-    t = []
-    px = []
-    py = []
-    pz = []
-    pxd = []
-    pyd = []
-    pzd = []
-    Fx = []
-    Fy = []
-    Fz = []
-
-
     count = 0
-    rate = rospy.Rate(100) # 100 Hz
     while not rospy.is_shutdown():
         count = count + 1
 
@@ -94,73 +118,57 @@ if __name__ == "__main__":
         # print '\nposition_d: ', position_d
         # print '\norientation_d: ', orientation_d
 
-        EE_force = robot.franka_EE_force()
-         # print '\nEE_force: ', EE_force
+        error = robot.robot_error()
+        # print '\nerror: ', error
 
+        ee_wrench = robot.robot_wrench()
+        # print '\nee_wrench: ', ee_wrench
+
+        # =============================================================================================
+        # SEND TO FILE
+        # =============================================================================================
+        TIME = count * 0.001
+        px = position[0]
+        py = position[1]
+        pz = position[2]
+
+        pxd = position_d[0]
+        pyd = position_d[1]
+        pzd = position_d[2]
+
+        ox = orientation[0]
+        oy = orientation[1]
+        oz = orientation[2]
+        ow = orientation[3]
+
+        oxd = orientation_d[0]
+        oyd = orientation_d[1]
+        ozd = orientation_d[2]
+        owd = orientation_d[3]
+
+        epx = error[0]
+        epy = error[1]
+        epz = error[2]
+        eox = error[3]
+        eoy = error[4]
+        eoz = error[5]
+
+        Fx = ee_wrench[0]
+        Fy = ee_wrench[1]
+        Fz = ee_wrench[2]
+
+        lines = str(TIME) + ' ' \
+                + str(px) + ' ' + str(py) + ' ' + str(pz) + ' ' + str(pxd) + ' ' + str(pyd) + ' ' + str(pzd) + ' ' \
+                + str(ox) + ' ' + str(oy) + ' ' + str(oz) + ' ' + str(ow) + ' ' + str(oxd) + ' ' + str(oyd) + ' ' + str(ozd) + ' ' + str(owd) + ' ' \
+                + str(epx) + ' ' + str(epy) + ' ' + str(epz) + ' ' + str(eox) + ' ' + str(eoy) + ' ' + str(eoz) + ' ' \
+                + str(Fx) + ' ' + str(Fy) + ' ' + str(Fz)
+        file.write(lines + '\n')
         
-        # plot
-        t.append(count/100.0)
+        #f"{a:.3f}"
+        #f.write(f"")             
         
-        px.append(position[0])
-        py.append(position[1])
-        pz.append(position[2])
-
-        pxd.append(position_d[0])
-        pyd.append(position_d[1])
-        pzd.append(position_d[2])
-
-        Fx.append(EE_force[0])
-        Fy.append(EE_force[1])
-        Fz.append(EE_force[2])
-
-        # -----------------------------------------------------------------------
-        pyplot.figure(1) 
-        # pyplot.subplot(3, 1, 1)
-        # pyplot.plot(t, px, '--r', linewidth = 1.5, label='robot')
-        # pyplot.plot(t, pxd, 'k', linewidth = 1.5, label='desired')   
-        # pyplot.grid(True)
-        # pyplot.xlabel('t(s)')
-        # pyplot.ylabel('px(m)')
-
-        # pyplot.subplot(3, 1, 2)
-        # pyplot.plot(t, py, '--g', linewidth = 1.5, label='robot')
-        # pyplot.plot(t, pyd, 'y', linewidth = 1.5, label='desired')    
-        # pyplot.grid(True)
-        # pyplot.xlabel('t(s)')
-        # pyplot.ylabel('py(m)')
-
-        # pyplot.subplot(3, 1, 3)
-        pyplot.plot(t, pz, '--b', linewidth = 1.5, label='robot')
-        pyplot.plot(t, pzd, 'm', linewidth = 1.5, label='desired')    
-        pyplot.grid(True)
-        pyplot.xlabel('t(s)')
-        pyplot.ylabel('pz(m)')
-
-        # -----------------------------------------------------------------------
-        pyplot.figure(2)
-        # pyplot.subplot(3, 1, 1)
-        # pyplot.plot(t, Fx, 'r', linewidth = 1.5)
-        # pyplot.grid(True)
-        # pyplot.xlabel('t(s)')
-        # pyplot.ylabel('Fx(N)')
-
-        # pyplot.subplot(3, 1, 2)
-        # pyplot.plot(t, Fy, 'g', linewidth = 1.5)
-        # pyplot.grid(True)
-        # pyplot.xlabel('t(s)')
-        # pyplot.ylabel('Fy(N)')
-
-        # pyplot.subplot(3, 1, 3)
-        pyplot.plot(t, Fz, 'b', linewidth = 1.5)
-        pyplot.grid(True)
-        pyplot.xlabel('t(s)')
-        pyplot.ylabel('Fz(N)')
-        # -----------------------------------------------------------------------
-
-        pyplot.pause(0.01)
-                      
         rate.sleep()
 
-    pyplot.show()
+    file.close()
 
     

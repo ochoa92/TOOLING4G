@@ -61,7 +61,7 @@ class uDrillingController : public controller_interface::MultiInterfaceControlle
                                                        const Eigen::Matrix<double, 7, 1>& tau_J_d);  // NOLINT (readability-identifier-naming)
 
         // handles
-         std::unique_ptr<franka_hw::FrankaStateHandle> state_handle_;
+        std::unique_ptr<franka_hw::FrankaStateHandle> state_handle_;
         std::unique_ptr<franka_hw::FrankaModelHandle> model_handle_;
         std::vector<hardware_interface::JointHandle> joint_handles_;
 
@@ -129,10 +129,13 @@ class uDrillingController : public controller_interface::MultiInterfaceControlle
         ros::Publisher poseEE_d_pub;
         void posePublisherCallback(ros::Publisher& pose_pub, Eigen::Vector3d& position, Eigen::Quaterniond& orientation);
 
-        // error publisher
+        // error publisher (pose error)
         ros::Publisher error_pub;
         void errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error);
 
+        // wrench publisher (end-effector wrench)
+        ros::Publisher wrench_pub;
+        void wrenchPublisherCallback(ros::Publisher& wrench_pub, Eigen::Map<Eigen::Matrix<double, 6, 1>>& wrench);
 };
 
 }  // namespace franka_udrilling

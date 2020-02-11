@@ -199,14 +199,14 @@ int main(int argc, char** argv) {
 	////////////////////////////////////////////////////////////////////////////////
 	// FORCE LIMIT CONDITIONS
 	////////////////////////////////////////////////////////////////////////////////
-	double Fz_max = 12.0;
+	double Fz_max = 10.0;
 
 	////////////////////////////////////////////////////////////////////////////////
 	// change compliance parameters
 	////////////////////////////////////////////////////////////////////////////////
 	int systemRet = 0;
-	systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
-	systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
+	systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
+	systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
 	if (systemRet == -1) {
 		std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
 	}
@@ -362,7 +362,7 @@ int main(int argc, char** argv) {
 						systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.0");
 						// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 						// turn ON external torque
-						systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 1");
+						// systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 1");
 						if (systemRet == -1) {
 							std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
 						}
@@ -545,10 +545,10 @@ int main(int argc, char** argv) {
 
 					// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					// turn OFF external torque
-					systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 0");
-					if (systemRet == -1) {
-						std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-					}
+					// systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 0");
+					// if (systemRet == -1) {
+					// 	std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
+					// }
 					// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				}
 				t = t + delta_t;

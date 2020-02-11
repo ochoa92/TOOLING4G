@@ -5,7 +5,7 @@ namespace franka_udrilling {
 ////////////////////////////////////////////////////////////////////////////////
 uDrillingController::uDrillingController(){
     std::cout << "\nOpen the tracking file to write!" << std::endl << std::endl;
-    tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out);
+    tracking_file.open("/home/panda/kst/udrilling/udrilling_controller", std::ofstream::out); 
     
     // tracking_file << "t p_x p_xd p_y p_yd p_z p_zd Yaw Yaw_d Pitch Pitch_d Roll Roll_d e_px e_py e_pz e_ox e_oy e_oz pEE_x pEE_xd pEE_y pEE_yd pEE_z pEE_zd i_px i_py i_pz i_ox i_oy i_oz FxEE_franka FyEE_franka FzEE_franka FxO_franka FyO_franka FzO_franka Fx Fy Fz\n";
     // tracking_file << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m m m m m m m rad rad rad N N N N N N N N N\n";
@@ -126,6 +126,9 @@ bool uDrillingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
 
     // Create error publisher
     error_pub = node_handle.advertise<geometry_msgs::Twist>("/robot_error", 20);
+
+    // Create wrench publisher
+    wrench_pub = node_handle.advertise<geometry_msgs::Twist>("/robot_wrench", 20);
 
     return true;
 }
@@ -331,6 +334,9 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     // update error publisher
     errorPublisherCallback(error_pub, error);
 
+    // update wrench publisher
+    wrenchPublisherCallback(wrench_pub, EE_wrench_franka);
+
     // ---------------------------------------------------------------------------
     // Write to file
     // ---------------------------------------------------------------------------
@@ -360,20 +366,17 @@ void uDrillingController::update(const ros::Time& /*time*/, const ros::Duration&
     //               << O_wrench_franka[0] << " " << O_wrench_franka[1] << " " << O_wrench_franka[2] << " "
     //               << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << "\n";
 
-    tracking_file << TIME << " "
-                  << position[0] << " " << position_d_[0] << " "
-                  << position[1] << " " << position_d_[1] << " "
+    tracking_file << TIME << " " 
+                  << position[0] << " " << position_d_[0] << " " 
+                  << position[1]<< " " << position_d_[1] << " " 
                   << position[2] << " " << position_d_[2] << " "
                   << wrapTo2PI(euler_angles[0]) << " " << wrapTo2PI(euler_angles_d_[0]) << " "
                   << wrapTo2PI(euler_angles[1]) << " " << wrapTo2PI(euler_angles_d_[1]) << " "
                   << wrapToPI(euler_angles[2]) << " " << wrapToPI(euler_angles_d_[2]) << " "
-                  << error[0] << " " << error[1] << " " << error[2] << " "
-                  << error[3] << " " << error[4] << " " << error[5] << " "
-                  << EE_wrench_franka[0] << " " << EE_wrench_franka[1] << " " << EE_wrench_franka[2] << " "
-                  << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << "\n";
-
-    // std::cout << "control_command_success_rate" << robot_state.control_command_success_rate << std::endl;
-
+                  << error[0] << " " << error[1] << " " << error[2] << " " << error[3] << " "
+                  << error[4] << " " << error[5] << " " << EE_wrench_franka[0] << " "
+                  << EE_wrench_franka[1] << " " << EE_wrench_franka[2] << " " << EE_force[0] << " "
+                  << EE_force[1] << " " << EE_force[2] << "\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -531,6 +534,21 @@ void uDrillingController::errorPublisherCallback(ros::Publisher& error_pub, Eige
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+void uDrillingController::wrenchPublisherCallback(ros::Publisher& wrench_pub, Eigen::Map<Eigen::Matrix<double, 6, 1>>& wrench) {
+    geometry_msgs::Twist robot_wrench;
+
+    robot_wrench.linear.x = wrench[0];
+    robot_wrench.linear.y = wrench[1];
+    robot_wrench.linear.z = wrench[2];
+
+    robot_wrench.angular.x = wrench[3];
+    robot_wrench.angular.y = wrench[4];
+    robot_wrench.angular.z = wrench[5];
+
+    // run wrench publisher
+    wrench_pub.publish(robot_wrench);
+}
 
 } // namespace franka_udrilling
 
