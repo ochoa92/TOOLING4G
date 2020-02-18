@@ -1,8 +1,8 @@
 // =============================================================================
 // Name        : universal_udrilling_node.cpp
 // Author      : Hélio Ochoa
-// Description : For all kind of drills (0.6, 0.5, 0.4 mm) and robot performs 
-//               the drilling in any end-effector direction or orientation...             
+// Description : For all kind of drills (0.6, 0.5, 0.4 mm) and robot performs
+//               the drilling in any end-effector direction or orientation...
 // =============================================================================
 #include <franka_udrilling/udrilling_state.h>
 #include <tf/transform_broadcaster.h>
@@ -10,7 +10,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// STATE MACHINE 
+// STATE MACHINE
 ////////////////////////////////////////////////////////////////////////////////
 #define MOVE2STATION 0
 #define MOVE2POINT 1
@@ -33,7 +33,7 @@ int main(int argc, char **argv){
     ////////////////////////////////////////////////////////////////////////////////
     tf::TransformBroadcaster station_br, pandaEEd_br, mould_br;
     tf::Transform station_tf, pandaEEd_tf, mould_tf;
-    
+
 
     ////////////////////////////////////////////////////////////////////////////////
     // VIZUALIZATION MARKERS
@@ -166,7 +166,7 @@ int main(int argc, char **argv){
     Eigen::VectorXd pose(7,1);
     O_T_EE = panda.O_T_EE;
     pose = panda.robotPose(O_T_EE);
-    
+
 
     ////////////////////////////////////////////////////////////////////////////////
     // TRAJECTORY TO FIRST POINT
@@ -185,8 +185,8 @@ int main(int argc, char **argv){
     of.coeffs() << Qd_station.vec()[0], Qd_station.vec()[1], Qd_station.vec()[2], Qd_station.w();
     double t1 = 0.0;
     double delta_t1 = delta_t/(tf-ti);
-    
-    // move up 
+
+    // move up
     Eigen::Vector3d delta_up;
     delta_up << 0.0, 0.0, 0.25;
 
@@ -195,26 +195,26 @@ int main(int argc, char **argv){
     // DRILLING TRAJECTORY CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
     Eigen::Vector3d delta_drill, delta_roof, delta_predrill, delta_point, delta_goal, delta_limit;;
-    delta_drill << 0.0, 0.0, 0.001; 
-    delta_roof << 0.0, 0.0, 0.0015; 
-    
+    delta_drill << 0.0, 0.0, 0.001;
+    delta_roof << 0.0, 0.0, 0.0015;
+
     delta_predrill << 0.0, 0.0, 0.002;
     delta_point << 0.0, 0.0, 0.003;
 
     delta_goal << 0.0, 0.0, 0.010;  // 0.008
     delta_limit << 0.0, 0.0, 0.012; // 0.010
-    
+
     Eigen::Vector3d p_roof, p_goal, p_limit;
     p_roof.setZero();
     p_goal.setZero();
     p_limit.setZero();
-    
+
 
     ////////////////////////////////////////////////////////////////////////////////
     // FORCE LIMIT CONDITIONS
     ////////////////////////////////////////////////////////////////////////////////
     double Fz_max = 15.0;
-   
+
 
     ////////////////////////////////////////////////////////////////////////////////
     // SELECT DRILL LOOP
@@ -239,7 +239,7 @@ int main(int argc, char **argv){
                 std::cout << CLEANWINDOW << "Drill selected: <6>(0.6mm)!!!" << std::endl;
                 select_drill_print = 2;
             }
-            
+
             // change compliance parameters
             systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1200.0");
             systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 60.0");
@@ -261,7 +261,7 @@ int main(int argc, char **argv){
                 std::cout << CLEANWINDOW << "Drill selected: <5>(0.5mm)!!!" << std::endl;
                 select_drill_print = 2;
             }
-            
+
             // change compliance parameters
             systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1100.0");
             systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 55.0");
@@ -269,7 +269,7 @@ int main(int argc, char **argv){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
             Fz_max = 10.0;
-            delta_drill << 0.0, 0.0, 0.0005;  
+            delta_drill << 0.0, 0.0, 0.0005;
             select_drill = 1;
 
             break;
@@ -283,20 +283,20 @@ int main(int argc, char **argv){
                 std::cout << CLEANWINDOW << "Drill selected: <4>(0.4mm)!!!" << std::endl;
                 select_drill_print = 2;
             }
-            
+
             // change compliance parameters
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1000.0");
-            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 50.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Kpz 1100.0");
+            systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Dpz 55.0");
             if(systemRet == -1){
                 std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
             }
-            Fz_max = 8.0;
-            delta_drill << 0.0, 0.0, 0.00025;
+            Fz_max = 10.0;
+            delta_drill << 0.0, 0.0, 0.0005;
             select_drill = 1;
 
             break;
         }
-     
+
         ros::spinOnce();
         loop_rate.sleep();
     }
@@ -318,11 +318,11 @@ int main(int argc, char **argv){
     int flag_force_limit = 0;
     int n_points_done = 0;
     double result = 0.0;
-    
+
     while(ros::ok()){
 
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // Force Limit 
+        // Force Limit
         if( panda.K_F_ext_hat_K[2] > Fz_max ){
             flag_force_limit = 1;
         }
@@ -331,14 +331,14 @@ int main(int argc, char **argv){
         ////////////////////////////////////////////////////////////////////////////////
         // switch
         ////////////////////////////////////////////////////////////////////////////////
-        switch (flag_drilling) { 
+        switch (flag_drilling) {
 
             ////////////////////////////////////////////////////////////////////////////////
             case MOVE2STATION:
                 if(flag_print == 0){
                     std::cout << CLEANWINDOW << "Robot is moving to the station to lubricate the drill..." << std::endl;
                     flag_print = 1;
-     
+
                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     // turn ON integral
                     systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipx 0.5");
@@ -349,10 +349,10 @@ int main(int argc, char **argv){
                     systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.01");
                     if(systemRet == -1){
                         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                    }   
+                    }
                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 }
-                
+
                 // << MOVE2STATION >>
                 if(flag_station == 0){
                     if( (t >= ti) && (t <= tf) ){
@@ -381,7 +381,7 @@ int main(int argc, char **argv){
                         flag_station = 2;
                         pi << position_d;
                         pf << pi - Rd_station*delta_up;
-                        t = 0;  // reset time                        
+                        t = 0;  // reset time
                     }
                 }
                 // << UP >>
@@ -418,7 +418,7 @@ int main(int argc, char **argv){
                 if(flag_move2point == 0){
                     ti = 0.0;
                     tf = 4.0;
-                    if( (t >= ti) && (t <= tf) ){                        
+                    if( (t >= ti) && (t <= tf) ){
                         position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
                     }
                     else if(t > tf){
@@ -449,7 +449,7 @@ int main(int argc, char **argv){
                         pi << position_d;
                         pf << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                         pf << pf + Rd*delta_predrill;
-                        t = 0;  // reset time 
+                        t = 0;  // reset time
 
                         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         // turn OFF integral
@@ -458,14 +458,14 @@ int main(int argc, char **argv){
                         systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ipz 0.0");
                         systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Iox 0.0");
                         systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioy 0.0");
-                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.0");                          
+                        systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node Ioz 0.0");
                         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         // turn ON external torque
                         systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 1");
                         if(systemRet == -1){
                             std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                        }     
-                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   
+                        }
+                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                     }
                 }
@@ -479,7 +479,7 @@ int main(int argc, char **argv){
                 break;
 
             ////////////////////////////////////////////////////////////////////////////////
-            case PREDRILL:     
+            case PREDRILL:
                 if(flag_print == 2){
                     std::cout << CLEANWINDOW << "Robot is pre-drilling..." << std::endl;
                     flag_print = 3;
@@ -501,7 +501,7 @@ int main(int argc, char **argv){
                     p_goal << p_goal + Rd*delta_goal;
                     p_limit << P(0, n_points_done), P(1, n_points_done), P(2, n_points_done);
                     p_limit << p_limit + Rd*delta_limit;
-                    t = 0;  // reset time 
+                    t = 0;  // reset time
 
 
                 }
@@ -535,7 +535,7 @@ int main(int argc, char **argv){
                         }
                         else{
                             position_d = panda.polynomial3Trajectory(pi, pf, ti, tf, t);
-                        }                
+                        }
                     }
                     else if(t > tf){
                         flag_drilling = DRILLUP;
@@ -565,7 +565,7 @@ int main(int argc, char **argv){
 
             ////////////////////////////////////////////////////////////////////////////////
             case DRILLUP:
-                // << DRILLUP >> 
+                // << DRILLUP >>
                 ti = 0.0;
                 tf = 0.5;
                 if( (t >= ti) && (t <= tf) ){
@@ -588,7 +588,7 @@ int main(int argc, char **argv){
 
             ////////////////////////////////////////////////////////////////////////////////
             case DRILLDOWN:
-                // << DRILLDOWN >> 
+                // << DRILLDOWN >>
                 ti = 1.0;
                 tf = 2.5; // aumentar
                 if( (t >= ti) && (t <= tf) ){
@@ -621,7 +621,7 @@ int main(int argc, char **argv){
                     flag_print = 0;
                 }
 
-                // << UP >> 
+                // << UP >>
                 ti = 0.0;
                 tf = 4.0;
                 if( (t >= ti) && (t <= tf) ){
@@ -658,7 +658,7 @@ int main(int argc, char **argv){
                     systemRet = system("rosrun dynamic_reconfigure dynparam set /dynamic_reconfigure_compliance_param_node external_torque 0");
                     if(systemRet == -1){
                         std::cout << CLEANWINDOW << "The system method failed!" << std::endl;
-                    } 
+                    }
                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                 }
@@ -694,7 +694,7 @@ int main(int argc, char **argv){
 
         }
         ////////////////////////////////////////////////////////////////////////////////
-             
+
         // std::cout << CLEANWINDOW << position_d << std::endl;
         // std::cout << CLEANWINDOW << orientation_d.coeffs() << std::endl;
         panda.posePublisherCallback(position_d, orientation_d);
@@ -721,7 +721,7 @@ int main(int argc, char **argv){
         mould_br.sendTransform(tf::StampedTransform(mould_tf, ros::Time::now(), "/panda_link0", "/mold"));
 
         // Draw the points
-        marker_pub.publish(points);  
+        marker_pub.publish(points);
         ////////////////////////////////////////////////////////////////////////////////
 
         if(sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
@@ -734,4 +734,3 @@ int main(int argc, char **argv){
 
     return 0;
 }
-

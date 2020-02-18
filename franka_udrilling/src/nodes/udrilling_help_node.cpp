@@ -215,7 +215,7 @@ int main(int argc, char **argv){
         if( result > 0.0 ){
           // --> DRILL <--
           ti = 0.0;
-          tf = 0.6;
+          tf = 0.5;
           if( (t >= ti) && (t <= tf) ){
             position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
           }
@@ -272,8 +272,8 @@ int main(int argc, char **argv){
       case ROOFDOWN:
 
         // --> DOWN <--
-        ti = 0.0;
-        tf = 0.6;
+        ti = 1.0;
+        tf = 2.5;
         if( (t >= ti) && (t <= tf) ){
           position_d = panda.polynomial3_trajectory(pi, pf, ti, tf, t);
         }
