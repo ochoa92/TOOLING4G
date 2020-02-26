@@ -25,7 +25,7 @@ Spacenav::Spacenav(ros::NodeHandle &nh): nh_(nh) {
     // Create publishers
     pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/panda_equilibrium_pose", 20);
     mf_pub = nh_.advertise<trajectory_msgs::JointTrajectory>("/panda_hand_joint_trajectory_controller/command", 20);
-    
+
     while(ros::ok() && !panda_state_flag) {
         ros::spinOnce();
         loop_rate.sleep();
@@ -42,14 +42,14 @@ void Spacenav::pandaStateCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 
     Eigen::Affine3d aff;
     aff.translation() << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
-    
+
     Eigen::Quaterniond orientation;
-    orientation.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;  
+    orientation.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w;
     Eigen::Matrix3d R(orientation.toRotationMatrix());
     aff.linear() << R;
-    
+
     O_T_EE = aff.matrix();
-    
+
     panda_state_flag = 1;
 }
 
@@ -63,17 +63,17 @@ void Spacenav::joyCallback(const sensor_msgs::Joy::ConstPtr &msg) {
         if (msg->axes[i] >= threshold || msg->axes[i] <= -threshold) {
             if (i >= 0 && i <= 2){
                 K = 0.0005;
-            }              
+            }
             else if (i >= 3 && i <= 5){
                 K = 0.0005;
-            }              
+            }
             spacenav_motion(i) = K * msg->axes[i];
         }
 
         else if (msg->axes[i] <= threshold || msg->axes[i] >= -threshold){
             spacenav_motion(i) = 0;
         }
-        
+
     }
 
     time_lapse = ros::Time::now();
@@ -216,17 +216,17 @@ void Spacenav::MotionControl(Eigen::Matrix4d& Xd){
                 fingers_position = fingers_position + delta_fingers_position;
                 if(fingers_position(0) >= 0.1){
                     fingers_position << 0.1, 0.1;
-                }     
-                moveFingersCallback(fingers_position);   
+                }
+                moveFingersCallback(fingers_position);
             }
             else if(spacenav_motion(1) < 0.0){
                 fingers_position = fingers_position - delta_fingers_position;
                 if(fingers_position(0) <= 0.0){
                     fingers_position << 0.0, 0.0;
                 }
-                moveFingersCallback(fingers_position);   
+                moveFingersCallback(fingers_position);
             }
-            
+
             break;
 
     }
@@ -394,7 +394,7 @@ int Spacenav::inpolygon(const Eigen::MatrixXd &vertices, double x, double y){
 }
 
 // ####################################################################################
-Eigen::Vector3d Spacenav::polynomial3Trajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double ti, double tf, double t){  
+Eigen::Vector3d Spacenav::polynomial3Trajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double ti, double tf, double t){
 
     Eigen::Vector3d pd = pi + (3*(pf - pi)*pow((t - ti), 2))/pow((tf - ti), 2) - (2*(pf - pi)*pow((t - ti), 3))/pow((tf - ti), 3);
     return pd;
@@ -403,14 +403,14 @@ Eigen::Vector3d Spacenav::polynomial3Trajectory(Eigen::Vector3d& pi, Eigen::Vect
 // ####################################################################################
 Eigen::Vector3d Spacenav::lineTrajectory(Eigen::Vector3d& pi, Eigen::Vector3d& pf, double t){
 
-    Eigen::Vector3d pd = pi * (1 - t) + pf * t;  
+    Eigen::Vector3d pd = pi * (1 - t) + pf * t;
     return pd;
 }
 
 // ####################################################################################
 Eigen::Vector3d Spacenav::ellipseTrajectory(Eigen::Vector3d& pi, double a, double b, double T, double t, std::string axis){
 
-    double Wr = (2*PI)/T; // Ressonance frequency 
+    double Wr = (2*PI)/T; // Ressonance frequency
     Eigen::Vector3d pd;
     if( axis.compare("XY") == 0){
         pd[0] = pi[0] + a * cos(Wr * t) - a;
