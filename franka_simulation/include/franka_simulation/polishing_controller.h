@@ -84,7 +84,7 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 6, 1> integral_error;
         Eigen::Matrix<double, 6, 1> last_integral_error;
 
-        Eigen::Matrix<double, 7, 1> effort_initial;
+        Eigen::Matrix<double, 7, 1> effort_calibration;
         Eigen::Vector3d EE_force;
         Eigen::Vector3d EE_force_last;
         Eigen::Vector3d EE_force_filtered;
@@ -149,7 +149,7 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix3d points2Rotation(Eigen::Vector3d& P1, Eigen::Vector3d& P2, Eigen::Vector3d& P3);
 
         // computes the external torque
-        Eigen::Matrix<double, 7, 1> externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_initial);
+        Eigen::Matrix<double, 7, 1> externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_calibration);
 
         /**
          * Applies a first-order low-pass filter

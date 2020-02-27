@@ -8,8 +8,8 @@ PolishingController::PolishingController(){
     std::string tracking_path;
     tracking_path = "/home/panda/kst/simulation/polishing_controller";
     file_tracking.open(tracking_path, std::ofstream::out);
-    file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz i_px i_py i_pz i_ox i_oy i_oz Fx Fy Fz Fx_filtered Fy_filtered Fz_filtered\n";
-    file_tracking << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m rad rad rad N N N N N N\n";
+    file_tracking << "t p_x p_xd p_y p_yd p_z p_zd Yaw(X) Yaw_d(Xd) Pitch(Y) Pitch_d(Yd) Roll(Z) Roll_d(Zd) e_px e_py e_pz e_ox e_oy e_oz i_px i_py i_pz i_ox i_oy i_oz Fx Fy Fz Fx_filtered Fy_filtered Fz_filtered eff_1 eff_2 eff_3 eff_4 eff_5 eff_6 eff_7\n";
+    file_tracking << "s m m m m m m rad rad rad rad rad rad m m m rad rad rad m m m rad rad rad N N N N N N Nm Nm Nm Nm Nm Nm Nm\n";
 }
 
 PolishingController::~PolishingController(){
@@ -108,7 +108,7 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
 
-    effort_initial.setZero();
+    effort_calibration << -0.2148, -29.1461, -0.7831, 24.0192, 0.0070, 0.9748, 0.0442;
     EE_force.setZero();
     EE_force_last.setZero();
     EE_force_filtered.setZero();
@@ -244,7 +244,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     error.head(3) << position_d_ - position;
 
     // orientation error
-    Eigen::Matrix3d Rcd(R_d_ * R.inverse()); // described in the base frame
+    // Eigen::Matrix3d Rcd(R_d_ * R.inverse()); // described in the base frame
+    Eigen::Matrix3d Rcd(R_d_ * R.transpose()); // described in the base frame
     error.tail(3) << R2r(Rcd);
 
     // velocity error
@@ -316,10 +317,7 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // ---------------------------------------------------------------------------
     // Compute the EE external wrench (force,torque) acting on EE frame
     // ---------------------------------------------------------------------------
-    if(count == 2000){
-       effort_initial = effort;
-    }
-    Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, effort_initial);
+    Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, effort_calibration);
     Eigen::Matrix<double, 6, 1> wrench = J_dcgi.transpose() * (-1.0) * tau_ext; // end-effector wrench in base frame (force,torque)
     EE_force << wrench[0], wrench[1], wrench[2];
     EE_force << R_d_.transpose() * EE_force;
@@ -390,7 +388,8 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
                   << integral_error[0] << " " << integral_error[1] << " " << integral_error[2] << " "
                   << integral_error[3] << " " << integral_error[4] << " " << integral_error[5] << " "
                   << EE_force[0] << " " << EE_force[1] << " " << EE_force[2] << " "
-                  << EE_force_filtered[0] << " " << EE_force_filtered[1] << " " << EE_force_filtered[2] << "\n";
+                  << EE_force_filtered[0] << " " << EE_force_filtered[1] << " " << EE_force_filtered[2] << " "
+                  << effort[0] << " " << effort[1] << " " << effort[2] << " " << effort[3] << " " << effort[4] << " " << effort[5] << " " << effort[6] << "\n";
 
 }
 
@@ -620,8 +619,8 @@ Eigen::Matrix3d PolishingController::points2Rotation(Eigen::Vector3d& P1, Eigen:
 }
 
 
-Eigen::Matrix<double, 7, 1> PolishingController::externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_initial){
-    Eigen::Matrix<double, 7, 1> tau_ext = effort - effort_initial;
+Eigen::Matrix<double, 7, 1> PolishingController::externalTorque(Eigen::Matrix<double, 7, 1>& effort, Eigen::Matrix<double, 7, 1>& effort_calibration){
+    Eigen::Matrix<double, 7, 1> tau_ext = effort - effort_calibration;
     return tau_ext;
 }
 
