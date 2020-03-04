@@ -97,6 +97,9 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         Eigen::Matrix<double, 7, 7> K_external_torque_;
         Eigen::Matrix<double, 7, 7> K_external_torque_target_;
 
+        Eigen::Vector3d O_force;   // EE force in base frame
+        Eigen::Vector3d EE_force;  // EE force in end-effector frame
+
         // tracking file
         int count; // file counter
         std::ofstream tracking_file;
@@ -131,6 +134,10 @@ class PolishingController : public controller_interface::MultiInterfaceControlle
         // error publisher
         ros::Publisher error_pub;
         void errorPublisherCallback(ros::Publisher& error_pub, Eigen::Matrix<double, 6, 1>& error);
+
+        // wrench publisher (end-effector wrench)
+        ros::Publisher wrench_pub;
+        void wrenchPublisherCallback(ros::Publisher& wrench_pub, Eigen::Map<Eigen::Matrix<double, 6, 1>>& wrench);
 
         // mold tf
         tf::TransformBroadcaster br_mold;
