@@ -108,7 +108,8 @@ bool PolishingController::init(hardware_interface::RobotHW* robot_hw, ros::NodeH
     minJointLimits << -2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973;
     gradient.setZero();
 
-    effort_calibration << -0.2148, -29.1461, -0.7831, 24.0192, 0.0070, 0.9748, 0.0442;
+    // effort_calibration << -0.2148, -29.1461, -0.7831, 24.0192, 0.0070, 0.9748, 0.0442;
+    effort_calibration.setZero();
     EE_force.setZero();
     EE_force_last.setZero();
     EE_force_filtered.setZero();
@@ -317,6 +318,9 @@ void PolishingController::update(const ros::Time& /*time*/, const ros::Duration&
     // ---------------------------------------------------------------------------
     // Compute the EE external wrench (force,torque) acting on EE frame
     // ---------------------------------------------------------------------------
+    if(count < 2000){
+      effort_calibration = effort;
+    }
     Eigen::Matrix<double, 7, 1> tau_ext = externalTorque(effort, effort_calibration);
     Eigen::Matrix<double, 6, 1> wrench = J_dcgi.transpose() * (-1.0) * tau_ext; // end-effector wrench in base frame (force,torque)
     EE_force << wrench[0], wrench[1], wrench[2];
