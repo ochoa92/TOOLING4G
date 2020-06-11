@@ -21,7 +21,7 @@ The franka_polishing package provides a computed-torque control architecture for
 The franka_udrilling package provides a computed-torque control architecture for micro-drilling tasks using a synthetic reference.
 
 # Spacenav
-The franka_spacenav package provides a interface with a SpaceMouse from 3Dconnexion to control the Panda robot.
+The franka_spacenav package provides an interface with a SpaceMouse from 3Dconnexion to control the Panda robot.
 
 # Simulation
-The franka_simulation provides a interface for Gazebo simulator. 
+The franka_simulation provides an interface for Gazebo simulator. 
